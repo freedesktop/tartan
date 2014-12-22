@@ -32,6 +32,8 @@ clang_plugin_libtartan_la_SOURCES = \
 	clang-plugin/gvariant-checker.h \
 	clang-plugin/nullability-checker.cpp \
 	clang-plugin/nullability-checker.h \
+	clang-plugin/ownership-eval.cpp \
+	clang-plugin/ownership-eval.h \
 	clang-plugin/checker.cpp \
 	clang-plugin/checker.h \
 	clang-plugin/type-manager.cpp \

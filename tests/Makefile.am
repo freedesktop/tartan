@@ -18,6 +18,7 @@ c_tests = \
 	non-glib.c \
 	nonnull.c \
 	gerror-api.c \
+	ownership.c \
 	$(NULL)
 
 templates = \

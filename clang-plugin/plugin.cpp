@@ -37,6 +37,7 @@
 #include "gsignal-checker.h"
 #include "gvariant-checker.h"
 #include "nullability-checker.h"
+#include "ownership-eval.h"
 
 using namespace clang;
 
@@ -355,6 +356,8 @@ extern "C"
 void clang_registerCheckers (ento::CheckerRegistry &registry) {
 	registry.addChecker<GErrorChecker> ("tartan.GErrorChecker",
 	                                    "Check GError API usage");
+	registry.addChecker<OwnershipEval> ("tartan.OwnershipEval",
+	                                    "Evaluate transfers on calls");
 }
 
 extern "C"
