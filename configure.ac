@@ -30,7 +30,7 @@ LT_INIT([])
 PKG_PROG_PKG_CONFIG
 
 # Requirements
-LLVM_REQS=3.5
+LLVM_REQS=4.0
 GLIB_REQS=2.38  # TODO
 GIO_REQS=2.38  # TODO
 GIR_REQS=1.38.0  # TODO
@@ -86,26 +86,6 @@ AC_SUBST([LLVM_VERSION])
 
 AC_DEFINE_UNQUOTED([LLVM_CONFIG_VERSION],"$llvm_version",
                    [Configured LLVM version])
-
-# LLVM-specific version definitions
-AS_IF([test "$major" -gt 3 -o "$major" -eq 3 -a "$minor" -ge 5],[
-	AC_DEFINE([HAVE_LLVM_3_5], [1], [Whether LLVM ≥ 3.5 is available])
-])
-AS_IF([test "$major" -gt 3 -o "$major" -eq 3 -a "$minor" -ge 6],[
-	AC_DEFINE([HAVE_LLVM_3_6], [1], [Whether LLVM ≥ 3.6 is available])
-])
-AS_IF([test "$major" -gt 3 -o "$major" -eq 3 -a "$minor" -ge 7],[
-	AC_DEFINE([HAVE_LLVM_3_7], [1], [Whether LLVM ≥ 3.7 is available])
-])
-AS_IF([test "$major" -gt 3 -o "$major" -eq 3 -a "$minor" -ge 8],[
-	AC_DEFINE([HAVE_LLVM_3_8], [1], [Whether LLVM ≥ 3.8 is available])
-])
-AS_IF([test "$major" -gt 3 -o "$major" -eq 3 -a "$minor" -ge 9],[
-	AC_DEFINE([HAVE_LLVM_3_9], [1], [Whether LLVM ≥ 3.9 is available])
-])
-AS_IF([test "$major" -gt 4 -o "$major" -eq 4 -a "$minor" -ge 0],[
-	AC_DEFINE([HAVE_LLVM_4_0], [1], [Whether LLVM ≥ 4.0 is available])
-])
 
 # Clang dependency (e.g. the clang-devel package on Fedora)
 AC_LANG_PUSH([C++])

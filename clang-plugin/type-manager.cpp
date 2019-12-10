@@ -47,16 +47,8 @@ TypeManager::find_type_by_name (const std::string name)
 		return (*cached).second;
 	}
 
-#ifdef HAVE_LLVM_3_8
 	for (SmallVectorImpl<Type *>::const_iterator it = this->_context.getTypes ().begin (),
 	     ie = this->_context.getTypes ().end (); it != ie; ++it) {
-#elif HAVE_LLVM_3_5
-	for (SmallVectorImpl<Type *>::const_iterator it = this->_context.types ().begin (),
-	     ie = this->_context.types ().end (); it != ie; ++it) {
-#else /* if !HAVE_LLVM_3_5 */
-	for (ASTContext::const_type_iterator it = this->_context.types_begin (),
-	     ie = this->_context.types_end (); it != ie; ++it) {
-#endif /* !HAVE_LLVM_3_5 */
 		const Type *t = *it;
 		const TypedefType *tt = t->getAs<TypedefType> ();
 

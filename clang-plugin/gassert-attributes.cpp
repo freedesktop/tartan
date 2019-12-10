@@ -96,19 +96,11 @@ _handle_assertion (FunctionDecl& func, Expr& assertion_expr,
 	}
 
 	if (non_null_args.size () > 0) {
-#ifdef HAVE_LLVM_3_5
 		nonnull_attr = ::new (func.getASTContext ())
 			NonNullAttr (func.getSourceRange (),
 			             func.getASTContext (),
 			             non_null_args.data (),
 			             non_null_args.size (), 0);
-#else /* if !HAVE_LLVM_3_5 */
-		nonnull_attr = ::new (func.getASTContext ())
-			NonNullAttr (func.getSourceRange (),
-			             func.getASTContext (),
-			             non_null_args.data (),
-			             non_null_args.size ());
-#endif /* !HAVE_LLVM_3_5 */
 		func.addAttr (nonnull_attr);
 	}
 }

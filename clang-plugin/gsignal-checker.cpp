@@ -621,41 +621,27 @@ calling_convention_is_safe (CallingConv conv)
 	case CC_X86_64SysV:  /* x86-64 */
 	case CC_AAPCS:  /* ARM */
 	case CC_AAPCS_VFP:  /* ARM with VFP registers */
-#ifndef HAVE_LLVM_3_7
-	case CC_PnaclCall:  /* Chromium PNC — equivalent to cdecl */
-#endif
-#ifdef HAVE_LLVM_3_9
 	case CC_Swift:  /* Swift — lowered to C calling conventions */
 	case CC_PreserveMost:  /* arguments passed identically to cdecl */
 	case CC_PreserveAll:  /* arguments passed identically to cdecl */
-#endif
-#ifdef HAVE_LLVM_4_0
 	case CC_X86RegCall:
-#endif
 		return true;
 	case CC_X86StdCall:
 	case CC_X86FastCall:
 	case CC_X86ThisCall:
 	case CC_X86Pascal:
-#ifdef HAVE_LLVM_3_7
 	case CC_X86VectorCall:
-#endif
 		return false;
 	case CC_IntelOclBicc:
 		/* Intel OpenCL Built-Ins. I can’t find any documentation about
 		 * this, so let’s consider it unsafe. */
-#ifdef HAVE_LLVM_3_9
 	case CC_SpirFunction:
 	case CC_OpenCLKernel:
-#elif HAVE_LLVM_3_8
-	case CC_SpirFunction:
-	case CC_SpirKernel:
 		/* OpenCL SPIR calling conventions. These are ‘defined’ in §3.7
 		 * of
 		 * https://www.khronos.org/files/opencl-spir-12-provisional.pdf,
 		 * but without enough information to classify them as safe or
 		 * unsafe. */
-#endif
 	default:
 		return false;
 	}
@@ -783,13 +769,7 @@ _check_signal_callback_type (const Expr *expr,
 	 */
 	GICallableInfo *callable_info = signal_info;
 	guint n_signal_args = g_callable_info_get_n_args (callable_info) + 2;
-	guint n_callback_args;
-
-#ifdef HAVE_LLVM_3_5
-	n_callback_args = callback_type->getNumParams ();
-#else /* if !HAVE_LLVM_3_5 */
-	n_callback_args = callback_type->getNumArgs ();
-#endif /* !HAVE_LLVM_3_5 */
+	guint n_callback_args = callback_type->getNumParams ();
 
 	GITypeInfo expected_type_info;
 	QualType actual_type, expected_type;
@@ -818,11 +798,7 @@ _check_signal_callback_type (const Expr *expr,
 		const gchar *arg_name;
 		bool type_error;
 
-#ifdef HAVE_LLVM_3_5
 		actual_type = callback_type->getParamType (i);
-#else /* if !HAVE_LLVM_3_5 */
-		actual_type = callback_type->getArgType (i);
-#endif /* !HAVE_LLVM_3_5 */
 
 		if ((i == 0 && !is_swapped) ||
 		    (i == n_signal_args - 1 && is_swapped)) {
@@ -1058,11 +1034,7 @@ _check_signal_callback_type (const Expr *expr,
 
 	/* Return type. */
 	g_callable_info_load_return_type (callable_info, &expected_type_info);
-#ifdef HAVE_LLVM_3_5
 	actual_type = callback_type->getReturnType ();
-#else /* !HAVE_LLVM_3_5 */
-	actual_type = callback_type->getResultType ();
-#endif /* HAVE_LLVM_3_5 */
 	expected_type = _type_info_to_type (&expected_type_info, context,
 	                                    gir_manager, type_manager);
 	if (expected_type.isNull ()) {
