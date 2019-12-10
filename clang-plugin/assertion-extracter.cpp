@@ -70,7 +70,8 @@ _negation_expr (Expr* e, const ASTContext& context)
 	return new (context)
 		UnaryOperator (e, UnaryOperatorKind::UO_LNot,
 		               context.getLogicalOperationType (),
-		               VK_RValue, OK_Ordinary, SourceLocation ());
+		               VK_RValue, OK_Ordinary, SourceLocation (),
+		               /* can_overflow = */ false);
 }
 
 /* Combine expressions A and B to give (A && B). */
@@ -81,7 +82,7 @@ _conjunction_expr (Expr* lhs, Expr* rhs, const ASTContext& context)
 		BinaryOperator (lhs, rhs, BinaryOperatorKind::BO_LAnd,
 		                context.getLogicalOperationType (),
 		                VK_RValue, OK_Ordinary, SourceLocation (),
-		                false);
+		                FPOptions ());
 }
 
 /* Combine expressions A and B to give (A || B). */
@@ -92,7 +93,7 @@ _disjunction_expr (Expr* lhs, Expr* rhs, const ASTContext& context)
 		BinaryOperator (lhs, rhs, BinaryOperatorKind::BO_LOr,
 		                context.getLogicalOperationType (),
 		                VK_RValue, OK_Ordinary, SourceLocation (),
-		                false);
+		                FPOptions ());
 }
 
 /* Does the given statement look like:
@@ -532,7 +533,7 @@ _simplify_boolean_expr (Expr* expr, const ASTContext& context)
 					BinaryOperator (lhs, rhs, opcode,
 					                context.getLogicalOperationType (),
 					                VK_RValue, OK_Ordinary, SourceLocation (),
-					                false);
+					                FPOptions ());
 			}
 
 			/* ! (S1 op S2) ↦ ! (simplify(S1) op simplify(S2)) */

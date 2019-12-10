@@ -617,7 +617,7 @@ calling_convention_is_safe (CallingConv conv)
 {
 	switch (conv) {
 	case CC_C:  /* cdecl */
-	case CC_X86_64Win64:  /* x86-64 */
+	case CC_Win64:  /* x86-64 */
 	case CC_X86_64SysV:  /* x86-64 */
 	case CC_AAPCS:  /* ARM */
 	case CC_AAPCS_VFP:  /* ARM with VFP registers */

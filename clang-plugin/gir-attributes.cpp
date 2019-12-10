@@ -207,7 +207,7 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 			break;
 		}
 
-		std::vector<unsigned int> non_null_args;
+		std::vector<ParamIdx> non_null_args;
 		unsigned int j;
 
 		NonNullAttr* nonnull_attr = func.getAttr<NonNullAttr> ();
@@ -230,11 +230,6 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 			transfer = g_arg_info_get_ownership_transfer (&arg);
 			type_tag = g_type_info_get_tag (&type_info);
 
-			DEBUG_CODE (int array_type =
-				(g_type_info_get_tag (&type_info) ==
-				 GI_TYPE_TAG_ARRAY) ?
-					g_type_info_get_array_type (&type_info) :
-					-1);
 			DEBUG ("GirAttributes: " << func_name << "(" << j <<
 			       ")\n"
 			       "\tTransfer: " << transfer << "\n"
@@ -250,7 +245,9 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 			       g_type_tag_to_string (
 			           g_type_info_get_tag (&type_info)) << "\n"
 			       "\tArray type: " <<
-			       array_type << "\n"
+			       ((g_type_info_get_tag (&type_info) == GI_TYPE_TAG_ARRAY) ?
+						g_type_info_get_array_type (&type_info) :
+						-1) << "\n"
 			       "\tArray length: " <<
 			       g_type_info_get_array_length (&type_info) << "\n"
 			       "\tArray fixed size: " <<
@@ -259,7 +256,8 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 			if (_arg_is_nonnull (arg, type_info)) {
 				DEBUG ("Got nonnull arg " << obj_params + j <<
 				       " from GIR.");
-				non_null_args.push_back (obj_params + j);
+				/* ParamIdx is 1-based. */
+				non_null_args.push_back (ParamIdx (obj_params + j + 1, &func));
 			}
 
 			if (_type_should_be_const (transfer, type_tag)) {

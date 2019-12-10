@@ -118,7 +118,7 @@ NullabilityVisitor::TraverseFunctionDecl (FunctionDecl* func)
 		DEBUG ("nonnull attribute indices:");
 		for (NonNullAttr::args_iterator it = nonnull_attr->args_begin (),
 		     ie = nonnull_attr->args_end (); it != ie; ++it) {
-			DEBUG ("\t" << *it);
+			DEBUG ("\t" << it->getSourceIndex ());
 		}
 	} else {
 		DEBUG ("No nonnull attribute.");

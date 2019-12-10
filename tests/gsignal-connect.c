@@ -35,9 +35,6 @@
  * Could not check type of handler for signal ‘GObject::notify’. Callback function declaration does not contain parameter types.
  *                           (GCallback) object_notify_no_proto_cb,
  *                                       ^
- * note: expanded from macro 'g_signal_connect'
- *     g_signal_connect_data ((instance), (detailed_signal), (c_handler), (data), NULL, (GConnectFlags) 0)
- *                                                            ^
  */
 {
 	GObject *some_object = g_malloc (5);  // only checking the type

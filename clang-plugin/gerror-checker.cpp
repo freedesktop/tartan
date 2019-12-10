@@ -679,7 +679,8 @@ GErrorChecker::_gerror_new (const Expr *call_expr,
 	}
 
 	/* Fill the region with the initialization value. */
-	state = state->bindDefault (*allocated_sval, UndefinedVal ());
+	state = state->bindDefaultInitial (*allocated_sval, UndefinedVal (),
+	                                   context.getLocationContext ());
 
 	const MemRegion *allocated_region = allocated_sval->getAsRegion ();
 	assert (allocated_region);
@@ -732,7 +733,7 @@ GErrorChecker::_gerror_free (SVal error_location, ProgramStateRef state,
 	/* Fill the MemRegion with rubbish. */
 	if (error_location.getAs<Loc> ()) {
 		state = state->bindLoc (error_location.castAs<Loc> (),
-		                        UndefinedVal ());
+		                        UndefinedVal (), context.getLocationContext ());
 		assert (state != NULL);
 	}
 
@@ -1004,7 +1005,8 @@ GErrorChecker::_set_gerror (SVal error_location,
                             const SourceRange &source_range) const
 {
 	/* Bind the error location to the new error. */
-	state = state->bindLoc (error_location, new_error);
+	state = state->bindLoc (error_location, new_error,
+	                        context.getLocationContext ());
 	assert (state != NULL);
 
 	/* Constrain the GError* location (lvalue) and rvalue to be non-NULL. */
@@ -1040,7 +1042,8 @@ GErrorChecker::_clear_gerror (SVal error_location,
 	/* Bind the GError* to NULL. */
 	SValBuilder &sval_builder = context.getSValBuilder ();
 
-	state = state->bindLoc (error_location, sval_builder.makeNull ());
+	state = state->bindLoc (error_location, sval_builder.makeNull (),
+	                        context.getLocationContext ());
 	assert (state != NULL);
 
 	/* Constrain the GError* location (lvalue) to be NULL. */
