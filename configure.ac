@@ -65,8 +65,8 @@ major=`echo $llvm_version | sed -E 's/([[0-9]]*)\.([[0-9]]*)(\.[[0-9]]*)?(svn)?/
 minor=`echo $llvm_version | sed -E 's/([[0-9]]*)\.([[0-9]]*)(\.[[0-9]]*)?(svn)?/\2/'`
 
 AS_IF([test "$major" -gt "$req_major" -o \( "$major" -eq "$req_major" -a "$minor" -ge "$req_minor" \)],[
-	LLVM_CPPFLAGS=`$LLVM_CONFIG --cppflags`
-	LLVM_CXXFLAGS=`$LLVM_CONFIG --cxxflags`
+	LLVM_CPPFLAGS=`$LLVM_CONFIG --cppflags | sed -e 's,-I/,-isystem /,' | sed -e 's,-isystem /usr/include,-I/usr/include,'`
+	LLVM_CXXFLAGS=`$LLVM_CONFIG --cxxflags | sed -e 's,-I/,-isystem /,' | sed -e 's,-isystem /usr/include,-I/usr/include,'`
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 	# Don't link against the LLVM libs because they're huge. All the symbols
 	# will be available when the plugin is loaded anyway.
