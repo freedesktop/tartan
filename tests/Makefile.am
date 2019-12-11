@@ -3,6 +3,7 @@
 # with Tartan (and -Werror).
 
 TEST_EXTENSIONS = .c
+AM_TESTS_ENVIRONMENT = export abs_top_builddir=$(abs_top_builddir);
 C_LOG_COMPILER = $(top_srcdir)/tests/wrapper-compiler-errors
 
 c_tests = \

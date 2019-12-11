@@ -21,7 +21,7 @@
 # asserts there’s no error.
 
 input_filename=$1
-temp_dir=`mktemp -d`
+temp_dir=`mktemp -d`/${abs_top_builddir}
 tests_dir=`dirname $0`
 tartan=${tests_dir}/../scripts/tartan
 tartan_plugin=${tests_dir}/../clang-plugin/.libs/libtartan.so
@@ -46,6 +46,7 @@ template_name=`head -n 1 "${input_filename}" | \
 echo "Using template ${template_name}."
 
 # Split the input file up into sections, delimiting on ‘/*’ on a line by itself.
+mkdir -p ${temp_dir}/${srcdir}
 tail -n +3 "${input_filename}" > "${temp_dir}/${input_filename}.tail"
 csplit --keep-files --elide-empty-files --silent \
 	--prefix="${temp_dir}/${input_filename}_" \
