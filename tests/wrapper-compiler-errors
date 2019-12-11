@@ -68,9 +68,9 @@ while [[ -f `printf "${temp_dir}/${input_filename}_%02d.c" ${num}` ]]; do
 	echo " - Outputting to error files ${expected_error_filename} and ${actual_error_filename}."
 
 	# Wrap the section’s code with a prefix and suffix.
-	(cat "${template_name}.head.c"
+	(cat "${srcdir}/${template_name}.head.c"
 	 cat "${section_filename}"
-	 cat "${template_name}.tail.c"
+	 cat "${srcdir}/${template_name}.tail.c"
 	) > $section_filename.tmp
 	mv -f $section_filename.tmp $section_filename
 
