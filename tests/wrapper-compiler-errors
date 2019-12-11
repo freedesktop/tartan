@@ -36,7 +36,8 @@ test_status=0
 # Before starting, work out the compiler’s system include paths.
 # Thanks to: http://stackoverflow.com/a/17940271/2931197
 system_includes=`echo | cpp -Wp,-v 2>&1 | grep '^[[:space:]]' | \
-	sed -e 's/^[[:space:]]*/-isystem/' | tr "\n" ' '`
+	sed -e 's/^[[:space:]]*/-isystem/' -e 's/ (framework directory)//' | \
+	tr "\n" ' '`
 
 # Extract the template name.
 template_name=`head -n 1 "${input_filename}" | \
