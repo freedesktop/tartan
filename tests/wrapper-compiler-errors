@@ -24,7 +24,7 @@ input_filename=$1
 temp_dir=`mktemp -d`/${abs_top_builddir}
 tests_dir=`dirname $0`
 tartan=${tests_dir}/../scripts/tartan
-tartan_plugin=${tests_dir}/../clang-plugin/.libs/libtartan.so
+tartan_plugin=${abs_top_builddir}/clang-plugin/.libs/libtartan.so
 
 echo "Reading input from ${input_filename}."
 echo "Using temporary directory ${temp_dir}."
