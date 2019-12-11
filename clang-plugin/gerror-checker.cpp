@@ -421,8 +421,8 @@ GErrorChecker::_handle_eval_g_propagate_error (CheckerContext &context,
 		return state;
 	}
 
-	DEBUG_DUMPABLE ("Handle post-g_propagate_error: dest_location:",
-	                dest_location);
+	DEBUG_DUMPABLE ("Handle post-g_propagate_error: dest_ptr_location:",
+	                dest_ptr_location);
 	DEBUG_DUMPABLE ("Handle post-g_propagate_error: src_location:",
 	                src_location);
 
