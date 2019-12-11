@@ -130,11 +130,15 @@ if [ "$include_plugin_flags" = "1" ] &&
 	include_plugin_flags=0
 fi
 
-# The -analyzer-checker argument loads all 'tartan.*' static checkers.
+# The -analyzer-checker arguments load all 'tartan.*' and 'core.*' static
+# checkers.
 # The -add-plugin argument loads the tartan AST frontend plugin.
+# FIXME: in Clang 10.x, add '-analyzer-config silence-checker=core' in order to
+# only print Tartan warnings.
 add_plugin=( "-load" "$plugin_path" \
              "-add-plugin" "$plugin_name" \
-             "-analyzer-checker" "$plugin_name" )
+             "-analyzer-checker" "$plugin_name" \
+             "-analyzer-checker" "core" )
 
 if [ "$escape_plugin_flags" = "1" ]; then
 	_add_plugin=()
