@@ -236,7 +236,12 @@ NullabilityVisitor::TraverseFunctionDecl (FunctionDecl* func)
 				"annotation on the ‘%0’ parameter "
 				"of function %1().",
 				this->_compiler,
-				parm_decl->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+				parm_decl->getBeginLoc ()
+#else
+				parm_decl->getLocStart ()
+#endif
+				)
 			<< parm_decl->getNameAsString ()
 			<< func->getNameAsString ();
 		} else if (has_nullable && has_assertion) {
@@ -246,7 +251,12 @@ NullabilityVisitor::TraverseFunctionDecl (FunctionDecl* func)
 				"non-NULL precondition assertion on the ‘%0’ "
 				"parameter of function %1().",
 				this->_compiler,
-				parm_decl->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+				parm_decl->getBeginLoc ()
+#else
+				parm_decl->getLocStart ()
+#endif
+				)
 			<< parm_decl->getNameAsString ()
 			<< func->getNameAsString ();
 		} else if (!has_nullable && !has_assertion) {
@@ -259,7 +269,12 @@ NullabilityVisitor::TraverseFunctionDecl (FunctionDecl* func)
 					"(already has a nonnull attribute or "
 					"no non-NULL precondition assertion).",
 					this->_compiler,
-					parm_decl->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+					parm_decl->getBeginLoc ()
+#else
+					parm_decl->getLocStart ()
+#endif
+					)
 				<< parm_decl->getNameAsString ()
 				<< func->getNameAsString ();
 				break;
@@ -270,7 +285,12 @@ NullabilityVisitor::TraverseFunctionDecl (FunctionDecl* func)
 					"non-NULL precondition assertion on "
 					"the ‘%0’ parameter of function %1().",
 					this->_compiler,
-					parm_decl->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+					parm_decl->getBeginLoc ()
+#else
+					parm_decl->getLocStart ()
+#endif
+					)
 				<< parm_decl->getNameAsString ()
 				<< func->getNameAsString ();
 				break;
@@ -283,7 +303,12 @@ NullabilityVisitor::TraverseFunctionDecl (FunctionDecl* func)
 					"(optional) or (allow-none) "
 					"annotation).",
 					this->_compiler,
-					parm_decl->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+					parm_decl->getBeginLoc ()
+#else
+					parm_decl->getLocStart ()
+#endif
+					)
 				<< parm_decl->getNameAsString ()
 				<< func->getNameAsString ();
 				break;
@@ -296,7 +321,12 @@ NullabilityVisitor::TraverseFunctionDecl (FunctionDecl* func)
 				"non-NULL precondition annotation on the ‘%0’ "
 				"parameter of function %1().",
 				this->_compiler,
-				parm_decl->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+				parm_decl->getBeginLoc ()
+#else
+				parm_decl->getLocStart ()
+#endif
+				)
 			<< parm_decl->getNameAsString ()
 			<< func->getNameAsString ();
 		} else if (has_nonnull == MAYBE && has_assertion) {
@@ -307,7 +337,12 @@ NullabilityVisitor::TraverseFunctionDecl (FunctionDecl* func)
 				"parameter of function %1() (already has a "
 				"non-NULL precondition assertion).",
 				this->_compiler,
-				parm_decl->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+				parm_decl->getBeginLoc ()
+#else
+				parm_decl->getLocStart ()
+#endif
+				)
 			<< parm_decl->getNameAsString ()
 			<< func->getNameAsString ();
 		}

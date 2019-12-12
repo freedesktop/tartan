@@ -442,7 +442,12 @@ GirAttributesChecker::_handle_function_decl (FunctionDecl& func)
 				"return value of function %0() (already has a "
 				"const modifier).",
 				this->_compiler,
-				func.getLocStart ())
+#ifdef HAVE_LLVM_8_0
+				func.getBeginLoc ()
+#else
+				func.getLocStart ()
+#endif
+				)
 			<< func.getNameAsString ();
 		} else if (return_transfer == GI_TRANSFER_NOTHING &&
 		           _type_should_be_const (return_transfer,
@@ -453,7 +458,12 @@ GirAttributesChecker::_handle_function_decl (FunctionDecl& func)
 				"function %0() (already has a (transfer none) "
 				"annotation).",
 				this->_compiler,
-				func.getLocStart ())
+#ifdef HAVE_LLVM_8_0
+				func.getBeginLoc ()
+#else
+				func.getLocStart ()
+#endif
+				)
 			<< func.getNameAsString ();
 		}
 

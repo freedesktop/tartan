@@ -616,9 +616,11 @@ void
 GErrorChecker::checkDeadSymbols (SymbolReaper &symbol_reaper,
                                  CheckerContext &context) const
 {
+#ifndef HAVE_LLVM_8_0
 	if (!symbol_reaper.hasDeadSymbols ()) {
 		return;
 	}
+#endif
 
 	ProgramStateRef state = context.getState ();
 

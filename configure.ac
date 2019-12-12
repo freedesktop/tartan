@@ -87,6 +87,11 @@ AC_SUBST([LLVM_VERSION])
 AC_DEFINE_UNQUOTED([LLVM_CONFIG_VERSION],"$llvm_version",
                    [Configured LLVM version])
 
+# LLVM-specific version definitions
+AS_IF([test "$major" -ge 8],[
+    AC_DEFINE([HAVE_LLVM_8_0], [1], [Whether LLVM ≥ 8.0 is available])
+])
+
 # Clang dependency (e.g. the clang-devel package on Fedora)
 AC_LANG_PUSH([C++])
 old_cppflags="$CPPFLAGS"

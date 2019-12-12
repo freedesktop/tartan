@@ -322,7 +322,12 @@ _consume_variadic_argument (QualType expected_type,
 	if (*args_begin == *args_end) {
 		Debug::emit_error ("Expected a GVariant variadic argument of "
 		                   "type %0 but there wasn’t one.", compiler,
-		                   format_arg_str->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+		                   format_arg_str->getBeginLoc ()
+#else
+		                   format_arg_str->getLocStart ()
+#endif
+		                   )
 		<< expected_type;
 
 		return false;
@@ -351,7 +356,12 @@ _consume_variadic_argument (QualType expected_type,
 	    expected_type->isPointerType ()) {
 		Debug::emit_error ("Expected a GVariant variadic argument of "
 		                   "type %0 but saw NULL instead.", compiler,
-		                   arg->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+		                   arg->getBeginLoc ()
+#else
+		                   arg->getLocStart ()
+#endif
+		                   )
 		<< expected_type;
 
 		return false;
@@ -367,7 +377,13 @@ _consume_variadic_argument (QualType expected_type,
 			                   "argument of type %0 but saw one "
 			                   "of type %1. These types are not "
 			                   "compatible on every architecture.",
-			                   compiler, arg->getLocStart ())
+			                   compiler,
+#ifdef HAVE_LLVM_8_0
+			                   arg->getBeginLoc ()
+#else
+			                   arg->getLocStart ()
+#endif
+			                   )
 			<< expected_type
 			<< actual_type;
 
@@ -376,7 +392,12 @@ _consume_variadic_argument (QualType expected_type,
 			Debug::emit_error ("Expected a GVariant variadic "
 			                   "argument of type %0 but saw one "
 			                   "of type %1.", compiler,
-			                   arg->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+			                   arg->getBeginLoc ()
+#else
+			                   arg->getLocStart ()
+#endif
+			                   )
 			<< expected_type
 			<< actual_type;
 
@@ -455,7 +476,12 @@ _check_basic_type_string (const gchar **type_str,
 	default:
 		Debug::emit_error ("Expected a GVariant basic type string but "
 		                   "saw ‘%0’.", compiler,
-		                   format_arg_str->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+		                   format_arg_str->getBeginLoc ()
+#else
+		                   format_arg_str->getLocStart ()
+#endif
+		                   )
 		<< std::string (1, **type_str);
 
 		return false;
@@ -573,7 +599,12 @@ _check_type_string (const gchar **type_str,
 			Debug::emit_error ("Invalid GVariant type string: "
 			                   "tuple did not end with ‘)’.",
 			                   compiler,
-			                   format_arg_str->getLocStart ());
+#ifdef HAVE_LLVM_8_0
+			                   format_arg_str->getBeginLoc ()
+#else
+			                   format_arg_str->getLocStart ()
+#endif
+			                   );
 			return false;
 		}
 
@@ -593,7 +624,12 @@ _check_type_string (const gchar **type_str,
 				"Invalid GVariant type string: dict did not "
 				"contain exactly two elements.",
 				compiler,
-				format_arg_str->getLocStart ());
+#ifdef HAVE_LLVM_8_0
+				format_arg_str->getBeginLoc ()
+#else
+				format_arg_str->getLocStart ()
+#endif
+				);
 			return false;
 		} else if (!_check_basic_type_string (type_str, args_begin,
 		                                      args_end,
@@ -608,7 +644,12 @@ _check_type_string (const gchar **type_str,
 				"Invalid GVariant type string: dict did not "
 				"contain exactly two elements.",
 				compiler,
-				format_arg_str->getLocStart ());
+#ifdef HAVE_LLVM_8_0
+				format_arg_str->getBeginLoc ()
+#else
+				format_arg_str->getLocStart ()
+#endif
+				);
 			return false;
 		} else if (!_check_type_string (type_str, args_begin, args_end,
 		                                flags, compiler,
@@ -622,14 +663,24 @@ _check_type_string (const gchar **type_str,
 				"Invalid GVariant type string: dict "
 				"did not end with ‘}’.",
 				compiler,
-				format_arg_str->getLocStart ());
+#ifdef HAVE_LLVM_8_0
+				format_arg_str->getBeginLoc ()
+#else
+				format_arg_str->getLocStart ()
+#endif
+				);
 			return false;
 		} else if (**type_str != '}') {
 			Debug::emit_error (
 				"Invalid GVariant type string: dict "
 				"contains more than two elements.",
 				compiler,
-				format_arg_str->getLocStart ());
+#ifdef HAVE_LLVM_8_0
+				format_arg_str->getBeginLoc ()
+#else
+				format_arg_str->getLocStart ()
+#endif
+				);
 			return false;
 		}
 
@@ -741,7 +792,12 @@ _check_basic_format_string (const gchar **format_str,
 				"convenience operator ‘^’ was not followed by "
 				"a recognized convenience conversion.",
 				compiler,
-				format_arg_str->getLocStart ());
+#ifdef HAVE_LLVM_8_0
+				format_arg_str->getBeginLoc ()
+#else
+				format_arg_str->getLocStart ()
+#endif
+				);
 			return false;
 		}
 #undef CONVENIENCE_FORMAT
@@ -823,7 +879,12 @@ _check_format_string (const gchar **format_str,
 				"Invalid GVariant format string: tuple "
 				"did not end with ‘)’.",
 				compiler,
-				format_arg_str->getLocStart ());
+#ifdef HAVE_LLVM_8_0
+				format_arg_str->getBeginLoc ()
+#else
+				format_arg_str->getLocStart ()
+#endif
+				);
 			return false;
 		}
 
@@ -838,7 +899,12 @@ _check_format_string (const gchar **format_str,
 				"Invalid GVariant format string: dict did not "
 				"contain exactly two elements.",
 				compiler,
-				format_arg_str->getLocStart ());
+#ifdef HAVE_LLVM_8_0
+				format_arg_str->getBeginLoc ()
+#else
+				format_arg_str->getLocStart ()
+#endif
+				);
 			return false;
 		} else if (!_check_basic_format_string (format_str, args_begin,
 		                                        args_end,
@@ -854,7 +920,12 @@ _check_format_string (const gchar **format_str,
 				"Invalid GVariant format string: dict did not "
 				"contain exactly two elements.",
 				compiler,
-				format_arg_str->getLocStart ());
+#ifdef HAVE_LLVM_8_0
+				format_arg_str->getBeginLoc ()
+#else
+				format_arg_str->getLocStart ()
+#endif
+				);
 			return false;
 		} else if (!_check_format_string (format_str, args_begin,
 		                                  args_end,
@@ -869,14 +940,24 @@ _check_format_string (const gchar **format_str,
 				"Invalid GVariant format string: dict "
 				"did not end with ‘}’.",
 				compiler,
-				format_arg_str->getLocStart ());
+#ifdef HAVE_LLVM_8_0
+				format_arg_str->getBeginLoc ()
+#else
+				format_arg_str->getLocStart ()
+#endif
+				);
 			return false;
 		} else if (**format_str != '}') {
 			Debug::emit_error (
 				"Invalid GVariant format string: dict "
 				"contains more than two elements.",
 				compiler,
-				format_arg_str->getLocStart ());
+#ifdef HAVE_LLVM_8_0
+				format_arg_str->getBeginLoc ()
+#else
+				format_arg_str->getLocStart ()
+#endif
+				);
 			return false;
 		}
 
@@ -996,7 +1077,12 @@ _check_gvariant_format_param (const CallExpr& call,
 			"Cannot check format string correctness. Instead "
 			"of a non-literal format string, use GVariantBuilder.",
 			compiler,
-			format_arg->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+			format_arg->getBeginLoc ()
+#else
+			format_arg->getLocStart ()
+#endif
+			)
 		<< func.getNameAsString ();
 		return false;
 	}
@@ -1046,7 +1132,13 @@ _check_gvariant_format_param (const CallExpr& call,
 		                   "with unpaired arguments. If using multiple "
 		                   "format strings, they should be enclosed in "
 		                   "brackets to create a tuple (e.g. ‘(%1)’).",
-		                   compiler, format_arg_str->getLocStart ())
+		                   compiler,
+#ifdef HAVE_LLVM_8_0
+		                   format_arg_str->getBeginLoc ()
+#else
+		                   format_arg_str->getLocStart ()
+#endif
+		                   )
 		<< format_str
 		<< whole_format_str;
 
@@ -1076,7 +1168,13 @@ _check_gvariant_format_param (const CallExpr& call,
 			                   "(or other valid) GVariant format "
 			                   "string should be added to the "
 			                   "format argument to use it.",
-			                   compiler, arg->getLocStart ())
+			                   compiler,
+#ifdef HAVE_LLVM_8_0
+			                   arg->getBeginLoc ()
+#else
+			                   arg->getLocStart ()
+#endif
+			                   )
 			<< arg->getType ()
 			<< error_format_str;
 		} else {
@@ -1090,7 +1188,13 @@ _check_gvariant_format_param (const CallExpr& call,
 			                   "type, so the argument must be "
 			                   "serialized to a "
 			                   "GVariant-representable type first.",
-			                   compiler, arg->getLocStart ())
+			                   compiler,
+#ifdef HAVE_LLVM_8_0
+			                   arg->getBeginLoc ()
+#else
+			                   arg->getLocStart ()
+#endif
+			                   )
 			<< arg->getType ();
 		}
 

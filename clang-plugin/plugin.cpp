@@ -23,7 +23,11 @@
 #include "config.h"
 
 #include <clang/Frontend/FrontendPluginRegistry.h>
+#ifdef HAVE_LLVM_8_0
+#include <clang/StaticAnalyzer/Frontend/CheckerRegistry.h>
+#else
 #include <clang/StaticAnalyzer/Core/CheckerRegistry.h>
+#endif
 #include <clang/AST/AST.h>
 #include <clang/AST/ASTConsumer.h>
 #include <clang/Frontend/CompilerInstance.h>
@@ -341,7 +345,11 @@ void clang_registerCheckers (ento::CheckerRegistry &registry);
 extern "C"
 void clang_registerCheckers (ento::CheckerRegistry &registry) {
 	registry.addChecker<GErrorChecker> ("tartan.GErrorChecker",
-	                                    "Check GError API usage");
+	                                    "Check GError API usage"
+#ifdef HAVE_LLVM_8_0
+	                                    , "http://www.freedesktop.org/software/tartan/"
+#endif
+	                                    );
 }
 
 extern "C"
