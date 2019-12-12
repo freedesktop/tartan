@@ -578,6 +578,7 @@ _is_gtype_subclass (GIBaseInfo *a, GIBaseInfo *b)
  *     Note: This is used for C++ non-static member function calls (when using
  *     MSVC++), so we cannot use C++ methods for callbacks with swapped
  *     parameters.
+ *   • Microsoft vectorcall: Same.
  *
  * References:
  *  [1]: http://en.wikipedia.org/wiki/X86_calling_conventions
@@ -623,9 +624,6 @@ calling_convention_is_safe (CallingConv conv)
 #ifndef HAVE_LLVM_3_7
 	case CC_PnaclCall:  /* Chromium PNC — equivalent to cdecl */
 #endif
-#ifdef HAVE_LLVM_3_7
-	case CC_X86VectorCall:
-#endif
 #ifdef HAVE_LLVM_3_9
 	case CC_Swift:  /* Swift — lowered to C calling conventions */
 	case CC_PreserveMost:  /* arguments passed identically to cdecl */
@@ -639,6 +637,9 @@ calling_convention_is_safe (CallingConv conv)
 	case CC_X86FastCall:
 	case CC_X86ThisCall:
 	case CC_X86Pascal:
+#ifdef HAVE_LLVM_3_7
+	case CC_X86VectorCall:
+#endif
 		return false;
 	case CC_IntelOclBicc:
 		/* Intel OpenCL Built-Ins. I can’t find any documentation about
