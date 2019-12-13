@@ -505,9 +505,19 @@ GErrorChecker::checkPreCall (const CallEvent &call,
 /* Dispatch call-evaluation events to the different per-function handlers.
  * Return true iff the call was evaluated. */
 bool
-GErrorChecker::evalCall (const CallExpr *call,
+GErrorChecker::evalCall (
+#ifdef HAVE_LLVM_9_0
+                         const CallEvent &call_event,
+#else
+                         const CallExpr *call,
+#endif
                          CheckerContext &context) const
 {
+#ifdef HAVE_LLVM_9_0
+	const CallExpr *call = llvm::dyn_cast<CallExpr>(call_event.getOriginExpr());
+	if (!call)
+		return false;
+#endif
 	const FunctionDecl *func_decl = context.getCalleeDecl (call);
 
 	if (func_decl == NULL ||

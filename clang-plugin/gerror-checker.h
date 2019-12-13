@@ -23,6 +23,8 @@
 #ifndef TARTAN_GERROR_CHECKER_H
 #define TARTAN_GERROR_CHECKER_H
 
+#include "config.h"
+
 #include <clang/AST/AST.h>
 #include <clang/StaticAnalyzer/Core/BugReporter/BugType.h>
 #include <clang/StaticAnalyzer/Core/Checker.h>
@@ -159,7 +161,12 @@ private:
 public:
 	void checkPreCall (const CallEvent &call,
 	                   CheckerContext &context) const;
-	bool evalCall (const CallExpr *call,
+	bool evalCall (
+#ifdef HAVE_LLVM_9_0
+	               const CallEvent &call_event,
+#else
+	               const CallExpr *call,
+#endif
 	               CheckerContext &context) const;
 	void checkBind (SVal loc, SVal val, const Stmt *stmt,
 	                CheckerContext &context) const;
