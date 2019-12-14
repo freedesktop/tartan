@@ -58,7 +58,7 @@ elif [ -f "$clang_prefix/lib/tartan/$clang_version/libtartan.so" ]; then
 	# 32-bit installed.
 	plugin_path="$clang_prefix/lib/tartan/$clang_version/libtartan.so"
 elif [ ! -d "$clang_prefix/lib/tartan/$clang_version/" ]; then
-	echo "Error: Unsupported version of Clang ‘$clang_version’. Recompile Tartan for this version of Clang, set TARTAN_CC to a supported Clang version, or set TARTAN_PLUGIN to a plugin which supports this version." >& 2
+	echo "Error: Unsupported version of Clang ‘${clang_version}’. Recompile Tartan for this version of Clang, set TARTAN_CC to a supported Clang version, or set TARTAN_PLUGIN to a plugin which supports this version." >& 2
 	exit 2
 else
 	echo "Error: Could not find libtartan.so. Set TARTAN_PLUGIN to the absolute path of the Tartan plugin." >& 2
