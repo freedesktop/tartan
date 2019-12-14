@@ -428,6 +428,20 @@ AssertionExtracter::is_assertion_stmt (Stmt& stmt, const ASTContext& context)
 
 		return is_assertion_stmt (*sub_expr, context);
 	}
+	case Stmt::StmtClass::CXXTryStmtClass: {
+		/* Handle a C++ try statement. We assume any assertions in any of the
+		 * handler blocks happen after program state is modified, so we only
+		 * consider the try block.
+		 * Transformations:
+		 *     try { S1 } catch (…) { S2 } [ … catch (…) { Sn } ] ↦ calc(S1) */
+		CXXTryStmt& try_stmt = cast<CXXTryStmt> (stmt);
+
+		CompoundStmt* try_block = try_stmt.getTryBlock ();
+		if (try_block == NULL)
+			return NULL;
+
+		return is_assertion_stmt (*try_block, context);
+	}
 	case Stmt::StmtClass::GCCAsmStmtClass:
 	case Stmt::StmtClass::MSAsmStmtClass:
 		/* Inline assembly. There is no way we are parsing this, so
