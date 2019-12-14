@@ -2,12 +2,14 @@
 # compile successfully without Tartan, and which should fail compilation
 # with Tartan (and -Werror).
 
-TEST_EXTENSIONS = .c
+TEST_EXTENSIONS = .c .cpp
 AM_TESTS_ENVIRONMENT = export abs_top_builddir=$(abs_top_builddir);
 C_LOG_COMPILER = $(top_srcdir)/tests/wrapper-compiler-errors
+CPP_LOG_COMPILER = $(C_LOG_COMPILER)
 
 c_tests = \
 	assertion-extraction.c \
+	assertion-extraction-cpp.cpp \
 	assertion-extraction-return.c \
 	gsignal-connect.c \
 	gvariant-builder.c \

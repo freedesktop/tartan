@@ -378,6 +378,19 @@ AssertionExtracter::is_assertion_stmt (Stmt& stmt, const ASTContext& context)
 		 *     I ↦ TRUE */
 		return dyn_cast<Expr> (&stmt);
 	}
+	case Stmt::StmtClass::ExprWithCleanupsClass: {
+		/* Handle an expression that introduces a cleanup to be run at the end
+		 * of evaluation; most likely a C++ temporary object.
+		 * Transformations:
+		 *     S ↦ calc(S) */
+		ExprWithCleanups& expr_cleanup = cast<ExprWithCleanups> (stmt);
+
+		Stmt *sub_expr = expr_cleanup.getSubExpr ();
+		if (sub_expr == NULL)
+			return NULL;
+
+		return is_assertion_stmt (*sub_expr, context);
+	}
 	case Stmt::StmtClass::ParenExprClass: {
 		/* Handle a parenthesised expression.
 		 * Transformations:
@@ -471,6 +484,9 @@ AssertionExtracter::is_assertion_stmt (Stmt& stmt, const ASTContext& context)
 static Expr*
 _simplify_boolean_expr (Expr* expr, const ASTContext& context)
 {
+	if (ExprWithCleanups* expr_cleanup = dyn_cast<ExprWithCleanups> (expr))
+		expr = expr_cleanup->getSubExpr ();
+
 	expr = expr->IgnoreParens ();
 
 	DEBUG ("Simplifying boolean expression of type " <<

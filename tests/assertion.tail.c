@@ -4,7 +4,7 @@
 int
 main (void)
 {
-	GObject *obj = g_malloc (5);
+	GObject *obj = (GObject *) g_malloc (5);
 
 	/* Various NULL and non-NULL calls to the function. */
 	assertion_func ("str", 0, obj);
