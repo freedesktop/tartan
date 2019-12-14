@@ -468,10 +468,29 @@ AssertionExtracter::is_assertion_stmt (Stmt& stmt, const ASTContext& context)
 		 * Transformations:
 		 *     S1 op S2 ↦ NULL */
 	case Stmt::StmtClass::ForStmtClass:
+	case Stmt::StmtClass::CXXForRangeStmtClass:
 		/* Handle a for statement. We assume these *always* change
 		 * program state.
 		 * Transformations:
 		 *     for (…) { … } ↦ NULL */
+	case Stmt::StmtClass::AtomicExprClass:
+		/* Handle a C++11 or C11 atomic builtin. This definitely modifies
+		 * program state.
+		 * Transformations:
+		 *     __atomic_builtin (…) ↦ NULL */
+	case Stmt::StmtClass::CXXDeleteExprClass:
+	case Stmt::StmtClass::CXXNewExprClass:
+	case Stmt::StmtClass::CXXThrowExprClass:
+		/* Handle a C++ delete, new, or throw expression. These definitely
+		 * modify program state.
+		 * Transformations:
+		 *     delete S ↦ NULL
+		 *     new S (…) ↦ NULL
+		 *     throw S ↦ NULL */
+	case Stmt::StmtClass::CXXMemberCallExprClass:
+	case Stmt::StmtClass::CXXOperatorCallExprClass:
+		/* Handle a C++ call. These could possibly contain some form of
+		 * assertion, but not one that we recognize currently. */
 	case Stmt::StmtClass::WhileStmtClass: {
 		/* Handle a while(…) { … } block. Because we don't want to solve
 		 * the halting problem, just assume all while statements cannot
@@ -716,6 +735,8 @@ _assertion_is_gobject_type_check (Expr& assertion_expr,
 	case Expr::UnaryOperatorClass:
 	case Expr::ConditionalOperatorClass:
 	case Expr::CallExprClass:
+	case Expr::CXXMemberCallExprClass:
+	case Expr::CXXOperatorCallExprClass:
 	case Expr::ImplicitCastExprClass: {
 		/* These can’t be type checks. */
 		return 0;
@@ -849,7 +870,12 @@ _assertion_is_explicit_nonnull_check (Expr& assertion_expr,
 		 * detecting them requires a formal program transformation which
 		 * has not been implemented yet. */
 	case Expr::CallExprClass:
+	case Expr::CXXMemberCallExprClass:
 		/* Function calls can’t be nonnull checks. */
+	case Expr::CXXOperatorCallExprClass:
+		/* An overloaded operator might be a nonnull check, but only on a C++
+		 * object, which we choose not to handle because objects might implement
+		 * any sort of weird behaviour in their overloaded operators. */
 	case Expr::IntegerLiteralClass: {
 		/* Integer literals can’t be nonnull checks. */
 		return 0;
