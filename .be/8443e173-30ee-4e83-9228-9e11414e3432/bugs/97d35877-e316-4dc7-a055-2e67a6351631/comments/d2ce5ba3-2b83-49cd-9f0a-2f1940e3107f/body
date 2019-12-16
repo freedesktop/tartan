@@ -1,1 +1,0 @@
-Warn about function-local static variables which are not threadsafe or otherwise protected singletons

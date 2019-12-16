@@ -1,1 +1,0 @@
-At the moment the build fails if Tartan detects an error, even if that error is a false positive. Until Tartan is more robust and has been tested on a wider variety of code, all warnings and errors should be disableable to prevent people going insane. 
