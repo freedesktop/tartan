@@ -68,7 +68,6 @@ clang_plugin_libtartan_la_LDFLAGS = \
 	$(WARN_LDFLAGS) \
 	-avoid-version \
 	-module \
-	-no-undefined \
 	$(NULL)
 
 # Clang and scan-build wrapper scripts

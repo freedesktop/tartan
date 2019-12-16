@@ -23,7 +23,11 @@
 #include "config.h"
 
 #include <clang/Frontend/FrontendPluginRegistry.h>
+#ifdef HAVE_LLVM_8_0
+#include <clang/StaticAnalyzer/Frontend/CheckerRegistry.h>
+#else
 #include <clang/StaticAnalyzer/Core/CheckerRegistry.h>
+#endif
 #include <clang/AST/AST.h>
 #include <clang/AST/ASTConsumer.h>
 #include <clang/Frontend/CompilerInstance.h>
@@ -69,7 +73,6 @@ protected:
 	 * of the ASTConsumer. The TartanAction object is destroyed immediately
 	 * after this function call returns, so must be careful not to retain
 	 * state which is needed by the consumers. */
-#ifdef HAVE_LLVM_3_6
 	std::unique_ptr<ASTConsumer>
 	CreateASTConsumer (CompilerInstance &compiler, llvm::StringRef in_file)
 	{
@@ -118,39 +121,6 @@ protected:
 
 		return llvm::make_unique<MultiplexConsumer> (std::move (consumers));
 	}
-#else /* if !HAVE_LLVM_3_6 */
-	ASTConsumer *
-	CreateASTConsumer (CompilerInstance &compiler, llvm::StringRef in_file)
-	{
-		std::vector<ASTConsumer*> consumers;
-
-		/* Annotaters. */
-		consumers.push_back (
-			new GirAttributesConsumer (global_gir_manager));
-		consumers.push_back (
-			new GAssertAttributesConsumer ());
-
-		/* Checkers. */
-		consumers.push_back (
-			new NullabilityConsumer (compiler,
-			                         global_gir_manager,
-			                         this->_disabled_checkers));
-		consumers.push_back (
-			new GVariantConsumer (compiler,
-			                      global_gir_manager,
-			                      this->_disabled_checkers));
-		consumers.push_back (
-			new GSignalConsumer (compiler,
-			                     global_gir_manager,
-			                     this->_disabled_checkers));
-		consumers.push_back (
-			new GirAttributesChecker (compiler,
-			                          global_gir_manager,
-			                          this->_disabled_checkers));
-
-		return new MultiplexConsumer (consumers);
-	}
-#endif /* !HAVE_LLVM_3_6 */
 
 private:
 	bool
@@ -375,7 +345,11 @@ void clang_registerCheckers (ento::CheckerRegistry &registry);
 extern "C"
 void clang_registerCheckers (ento::CheckerRegistry &registry) {
 	registry.addChecker<GErrorChecker> ("tartan.GErrorChecker",
-	                                    "Check GError API usage");
+	                                    "Check GError API usage"
+#ifdef HAVE_LLVM_8_0
+	                                    , "http://www.freedesktop.org/software/tartan/"
+#endif
+	                                    );
 }
 
 extern "C"

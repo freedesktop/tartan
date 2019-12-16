@@ -72,12 +72,7 @@ _arg_is_nonnull (GIArgInfo arg, GITypeInfo type_info)
 static bool
 _function_return_type_is_const (FunctionDecl& func)
 {
-#ifdef HAVE_LLVM_3_5
 	QualType type = func.getReturnType ();
-#else /* if !HAVE_LLVM_3_5 */
-	QualType type = func.getResultType ();
-#endif /* !HAVE_LLVM_3_5 */
-
 	QualType canonical_type = type.getCanonicalType ();
 
 	const PointerType* pointer_type = dyn_cast<PointerType> (canonical_type);
@@ -105,11 +100,7 @@ _constify_function_return_type (FunctionDecl& func)
 	 * is immutable. */
 	const FunctionType* f_type = func.getType ()->getAs<FunctionType> ();
 	ASTContext& context = func.getASTContext ();
-#ifdef HAVE_LLVM_3_5
 	const QualType old_result_type = f_type->getReturnType ();
-#else /* if !HAVE_LLVM_3_5 */
-	const QualType old_result_type = f_type->getResultType ();
-#endif /* !HAVE_LLVM_3_5 */
 
 	const PointerType* old_result_pointer_type = dyn_cast<PointerType> (old_result_type);
 	if (old_result_pointer_type == NULL)
@@ -131,13 +122,7 @@ _constify_function_return_type (FunctionDecl& func)
 		} else {
 			const FunctionProtoType *f_p_type =
 				cast<FunctionProtoType> (f_type);
-			ArrayRef<QualType> param_types;
-
-#ifdef HAVE_LLVM_3_5
-			param_types = f_p_type->getParamTypes ();
-#else /* !HAVE_LLVM_3_5 */
-			param_types = f_p_type->getArgTypes ();
-#endif /* !HAVE_LLVM_3_5 */
+			ArrayRef<QualType> param_types = f_p_type->getParamTypes ();
 
 			t = context.getFunctionType (new_result_type,
 			                             param_types,
@@ -222,7 +207,7 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 			break;
 		}
 
-		std::vector<unsigned int> non_null_args;
+		std::vector<ParamIdx> non_null_args;
 		unsigned int j;
 
 		NonNullAttr* nonnull_attr = func.getAttr<NonNullAttr> ();
@@ -245,11 +230,6 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 			transfer = g_arg_info_get_ownership_transfer (&arg);
 			type_tag = g_type_info_get_tag (&type_info);
 
-			DEBUG_CODE (int array_type =
-				(g_type_info_get_tag (&type_info) ==
-				 GI_TYPE_TAG_ARRAY) ?
-					g_type_info_get_array_type (&type_info) :
-					-1);
 			DEBUG ("GirAttributes: " << func_name << "(" << j <<
 			       ")\n"
 			       "\tTransfer: " << transfer << "\n"
@@ -265,7 +245,9 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 			       g_type_tag_to_string (
 			           g_type_info_get_tag (&type_info)) << "\n"
 			       "\tArray type: " <<
-			       array_type << "\n"
+			       ((g_type_info_get_tag (&type_info) == GI_TYPE_TAG_ARRAY) ?
+						g_type_info_get_array_type (&type_info) :
+						-1) << "\n"
 			       "\tArray length: " <<
 			       g_type_info_get_array_length (&type_info) << "\n"
 			       "\tArray fixed size: " <<
@@ -274,7 +256,8 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 			if (_arg_is_nonnull (arg, type_info)) {
 				DEBUG ("Got nonnull arg " << obj_params + j <<
 				       " from GIR.");
-				non_null_args.push_back (obj_params + j);
+				/* ParamIdx is 1-based. */
+				non_null_args.push_back (ParamIdx (obj_params + j + 1, &func));
 			}
 
 			if (_type_should_be_const (transfer, type_tag)) {
@@ -288,19 +271,11 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 
 		if (non_null_args.size () > 0 &&
 		    !_ignore_glib_internal_func (func_name)) {
-#ifdef HAVE_LLVM_3_5
 			nonnull_attr = ::new (func.getASTContext ())
 				NonNullAttr (func.getSourceRange (),
 				             func.getASTContext (),
 				             non_null_args.data (),
 				             non_null_args.size (), 0);
-#else /* if !HAVE_LLVM_3_5 */
-			nonnull_attr = ::new (func.getASTContext ())
-				NonNullAttr (func.getSourceRange (),
-				             func.getASTContext (),
-				             non_null_args.data (),
-				             non_null_args.size ());
-#endif /* !HAVE_LLVM_3_5 */
 			func.addAttr (nonnull_attr);
 		}
 
@@ -316,17 +291,10 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 		return_type_tag = g_type_info_get_tag (&return_type_info);
 
 		if (return_transfer != GI_TRANSFER_NOTHING) {
-#ifdef HAVE_LLVM_3_5
 			WarnUnusedAttr* warn_unused_attr =
 				::new (func.getASTContext ())
 				WarnUnusedAttr (func.getSourceRange (),
 				                func.getASTContext (), 0);
-#else /* if !HAVE_LLVM_3_5 */
-			WarnUnusedAttr* warn_unused_attr =
-				::new (func.getASTContext ())
-				WarnUnusedAttr (func.getSourceRange (),
-				                func.getASTContext ());
-#endif /* !HAVE_LLVM_3_5 */
 			func.addAttr (warn_unused_attr);
 		} else if (_type_should_be_const (return_transfer,
 		                                  return_type_tag)) {
@@ -338,33 +306,16 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 		 * or replacement function so we can’t make use of them. */
 		if (g_base_info_is_deprecated (info) &&
 		    !func.hasAttr<DeprecatedAttr> ()) {
-#ifdef HAVE_LLVM_3_8
 			DeprecatedAttr* deprecated_attr =
 				::new (func.getASTContext ())
 				DeprecatedAttr (func.getSourceRange (),
 				                func.getASTContext (),
 				                0);
-#elif HAVE_LLVM_3_5
-			DeprecatedAttr* deprecated_attr =
-				::new (func.getASTContext ())
-				DeprecatedAttr (func.getSourceRange (),
-				                func.getASTContext (),
-				                "Deprecated using the gtk-doc "
-				                "attribute.", 0);
-#else /* if !HAVE_LLVM_3_5 */
-			DeprecatedAttr* deprecated_attr =
-				::new (func.getASTContext ())
-				DeprecatedAttr (func.getSourceRange (),
-				                func.getASTContext (),
-				                "Deprecated using the gtk-doc "
-				                "attribute.");
-#endif /* !HAVE_LLVM_3_5 */
 			func.addAttr (deprecated_attr);
 		}
 
 		/* Mark the function as allocating memory if it’s a
 		 * constructor. */
-#if defined(HAVE_LLVM_3_7)
 		if (g_function_info_get_flags (info) &
 		    GI_FUNCTION_IS_CONSTRUCTOR &&
 		    !func.hasAttr<RestrictAttr> ()) {
@@ -374,27 +325,6 @@ GirAttributesConsumer::_handle_function_decl (FunctionDecl& func)
 				              func.getASTContext (), 0);
 			func.addAttr (malloc_attr);
 		}
-#elif defined(HAVE_LLVM_3_6)
-		if (g_function_info_get_flags (info) &
-		    GI_FUNCTION_IS_CONSTRUCTOR &&
-		    !func.hasAttr<MallocAttr> ()) {
-			MallocAttr* malloc_attr =
-				::new (func.getASTContext ())
-				MallocAttr (func.getSourceRange (),
-				            func.getASTContext (), 0);
-			func.addAttr (malloc_attr);
-		}
-#else
-		if (g_function_info_get_flags (info) &
-		    GI_FUNCTION_IS_CONSTRUCTOR &&
-		    !func.hasAttr<MallocAttr> ()) {
-			MallocAttr* malloc_attr =
-				::new (func.getASTContext ())
-				MallocAttr (func.getSourceRange (),
-				            func.getASTContext ());
-			func.addAttr (malloc_attr);
-		}
-#endif
 
 		break;
 	}
@@ -512,7 +442,12 @@ GirAttributesChecker::_handle_function_decl (FunctionDecl& func)
 				"return value of function %0() (already has a "
 				"const modifier).",
 				this->_compiler,
-				func.getLocStart ())
+#ifdef HAVE_LLVM_8_0
+				func.getBeginLoc ()
+#else
+				func.getLocStart ()
+#endif
+				)
 			<< func.getNameAsString ();
 		} else if (return_transfer == GI_TRANSFER_NOTHING &&
 		           _type_should_be_const (return_transfer,
@@ -523,7 +458,12 @@ GirAttributesChecker::_handle_function_decl (FunctionDecl& func)
 				"function %0() (already has a (transfer none) "
 				"annotation).",
 				this->_compiler,
-				func.getLocStart ())
+#ifdef HAVE_LLVM_8_0
+				func.getBeginLoc ()
+#else
+				func.getLocStart ()
+#endif
+				)
 			<< func.getNameAsString ();
 		}
 

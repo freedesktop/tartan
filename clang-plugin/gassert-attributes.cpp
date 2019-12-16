@@ -65,7 +65,7 @@ _handle_assertion (FunctionDecl& func, Expr& assertion_expr,
 		return;
 
 	/* TODO: Factor out the code to augment a nonnull attribute. */
-	std::vector<unsigned int> non_null_args;
+	std::vector<ParamIdx> non_null_args;
 
 	NonNullAttr* nonnull_attr = func.getAttr<NonNullAttr> ();
 	if (nonnull_attr != NULL) {
@@ -92,23 +92,16 @@ _handle_assertion (FunctionDecl& func, Expr& assertion_expr,
 		unsigned int j = parm_decl->getFunctionScopeIndex ();
 		DEBUG ("Got nonnull arg " << j << " (" <<
 		       val_decl->getNameAsString () << ") from assertion.");
-		non_null_args.push_back (j);
+		/* ParamIdx is 1-based. */
+		non_null_args.push_back (ParamIdx (j + 1, &func));
 	}
 
 	if (non_null_args.size () > 0) {
-#ifdef HAVE_LLVM_3_5
 		nonnull_attr = ::new (func.getASTContext ())
 			NonNullAttr (func.getSourceRange (),
 			             func.getASTContext (),
 			             non_null_args.data (),
 			             non_null_args.size (), 0);
-#else /* if !HAVE_LLVM_3_5 */
-		nonnull_attr = ::new (func.getASTContext ())
-			NonNullAttr (func.getSourceRange (),
-			             func.getASTContext (),
-			             non_null_args.data (),
-			             non_null_args.size ());
-#endif /* !HAVE_LLVM_3_5 */
 		func.addAttr (nonnull_attr);
 	}
 }

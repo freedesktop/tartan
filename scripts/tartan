@@ -33,7 +33,7 @@ fi
 #     Vendor-specific clang version 3.6.2-1bo1 (tags/RELEASE_362/final) (based on LLVM 3.6.2)
 #     Target: x86_64-unknown-linux-gnu
 #     Thread model: posix
-clang_version=`"$real_clang" --version | head -n1 | sed 's/\([^0-9]*\)\([[0-9]]*\)\.\([[0-9]]*\)\(\.[[0-9]]*\)\?\(svn\)\?\(.*\)/\2.\3/'`
+clang_version=`"$real_clang" --version | head -n1 | sed -E 's/([^0-9]*)([0-9]*)\.([0-9]*)(\.[0-9]*)?(svn)?(.*)/\2.\3/'`
 
 # Sanity check.
 if [ "$clang_version" == "" ]; then
@@ -58,7 +58,7 @@ elif [ -f "$clang_prefix/lib/tartan/$clang_version/libtartan.so" ]; then
 	# 32-bit installed.
 	plugin_path="$clang_prefix/lib/tartan/$clang_version/libtartan.so"
 elif [ ! -d "$clang_prefix/lib/tartan/$clang_version/" ]; then
-	echo "Error: Unsupported version of Clang ‘$clang_version’. Recompile Tartan for this version of Clang, set TARTAN_CC to a supported Clang version, or set TARTAN_PLUGIN to a plugin which supports this version." >& 2
+	echo "Error: Unsupported version of Clang ‘${clang_version}’. Recompile Tartan for this version of Clang, set TARTAN_CC to a supported Clang version, or set TARTAN_PLUGIN to a plugin which supports this version." >& 2
 	exit 2
 else
 	echo "Error: Could not find libtartan.so. Set TARTAN_PLUGIN to the absolute path of the Tartan plugin." >& 2
@@ -130,11 +130,15 @@ if [ "$include_plugin_flags" = "1" ] &&
 	include_plugin_flags=0
 fi
 
-# The -analyzer-checker argument loads all 'tartan.*' static checkers.
+# The -analyzer-checker arguments load all 'tartan.*' and 'core.*' static
+# checkers.
 # The -add-plugin argument loads the tartan AST frontend plugin.
+# FIXME: in Clang 10.x, add '-analyzer-config silence-checker=core' in order to
+# only print Tartan warnings.
 add_plugin=( "-load" "$plugin_path" \
              "-add-plugin" "$plugin_name" \
-             "-analyzer-checker" "$plugin_name" )
+             "-analyzer-checker" "$plugin_name" \
+             "-analyzer-checker" "core" )
 
 if [ "$escape_plugin_flags" = "1" ]; then
 	_add_plugin=()

@@ -55,16 +55,6 @@
 }
 
 /*
- * warning: Using uninitialized GError
- *         g_error_free (some_error);
- *         ^~~~~~~~~~~~~~~~~~~~~~~~~
- */
-{
-	GError *some_error;  // uninitialised
-	g_error_free (some_error);
-}
-
-/*
  *  warning: Freeing non-set GError
  *         g_error_free (some_error);
  *         ^~~~~~~~~~~~~~~~~~~~~~~~~
@@ -387,16 +377,6 @@
 	g_propagate_prefixed_error (NULL, sub_error, "prefix: ");
 	g_clear_error (&sub_error);
 	// ^-- bug: @sub_error has already effectively been freed
-}
-
-/*
- * warning: Freeing non-set GError
- *         g_propagate_error (error, sub_error);
- *         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-{
-	GError *sub_error = NULL;
-	g_propagate_error (error, sub_error);
 }
 
 /*

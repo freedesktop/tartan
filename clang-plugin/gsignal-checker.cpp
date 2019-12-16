@@ -578,6 +578,8 @@ _is_gtype_subclass (GIBaseInfo *a, GIBaseInfo *b)
  *     Note: This is used for C++ non-static member function calls (when using
  *     MSVC++), so we cannot use C++ methods for callbacks with swapped
  *     parameters.
+ *   • Microsoft vectorcall: Same.
+ *  - aarch64: vectorcall is assumed to be unsafe as it is on x86.
  *
  * References:
  *  [1]: http://en.wikipedia.org/wiki/X86_calling_conventions
@@ -616,45 +618,34 @@ calling_convention_is_safe (CallingConv conv)
 {
 	switch (conv) {
 	case CC_C:  /* cdecl */
-	case CC_X86_64Win64:  /* x86-64 */
+	case CC_Win64:  /* x86-64 */
 	case CC_X86_64SysV:  /* x86-64 */
 	case CC_AAPCS:  /* ARM */
 	case CC_AAPCS_VFP:  /* ARM with VFP registers */
-#ifndef HAVE_LLVM_3_7
-	case CC_PnaclCall:  /* Chromium PNC — equivalent to cdecl */
-#endif
-#ifdef HAVE_LLVM_3_7
-	case CC_X86VectorCall:
-#endif
-#ifdef HAVE_LLVM_3_9
 	case CC_Swift:  /* Swift — lowered to C calling conventions */
 	case CC_PreserveMost:  /* arguments passed identically to cdecl */
 	case CC_PreserveAll:  /* arguments passed identically to cdecl */
-#endif
-#ifdef HAVE_LLVM_4_0
 	case CC_X86RegCall:
-#endif
 		return true;
 	case CC_X86StdCall:
 	case CC_X86FastCall:
 	case CC_X86ThisCall:
 	case CC_X86Pascal:
+	case CC_X86VectorCall:
+#ifdef HAVE_LLVM_8_0
+	case CC_AArch64VectorCall:
+#endif
 		return false;
 	case CC_IntelOclBicc:
 		/* Intel OpenCL Built-Ins. I can’t find any documentation about
 		 * this, so let’s consider it unsafe. */
-#ifdef HAVE_LLVM_3_9
 	case CC_SpirFunction:
 	case CC_OpenCLKernel:
-#elif HAVE_LLVM_3_8
-	case CC_SpirFunction:
-	case CC_SpirKernel:
 		/* OpenCL SPIR calling conventions. These are ‘defined’ in §3.7
 		 * of
 		 * https://www.khronos.org/files/opencl-spir-12-provisional.pdf,
 		 * but without enough information to classify them as safe or
 		 * unsafe. */
-#endif
 	default:
 		return false;
 	}
@@ -709,7 +700,13 @@ _check_signal_callback_type (const Expr *expr,
 			                     "for signal ‘%0::%1’. Callback "
 			                     "function declaration does not "
 			                     "contain parameter types.",
-			                     compiler, expr->getLocStart ())
+			                     compiler,
+#ifdef HAVE_LLVM_8_0
+			                     expr->getBeginLoc ()
+#else
+			                     expr->getLocStart ()
+#endif
+			                     )
 			<< gir_manager.get_c_name_for_type (static_instance_info)
 			<< g_base_info_get_name (signal_info)
 			<< decl_range;
@@ -782,13 +779,7 @@ _check_signal_callback_type (const Expr *expr,
 	 */
 	GICallableInfo *callable_info = signal_info;
 	guint n_signal_args = g_callable_info_get_n_args (callable_info) + 2;
-	guint n_callback_args;
-
-#ifdef HAVE_LLVM_3_5
-	n_callback_args = callback_type->getNumParams ();
-#else /* if !HAVE_LLVM_3_5 */
-	n_callback_args = callback_type->getNumArgs ();
-#endif /* !HAVE_LLVM_3_5 */
+	guint n_callback_args = callback_type->getNumParams ();
 
 	GITypeInfo expected_type_info;
 	QualType actual_type, expected_type;
@@ -802,7 +793,13 @@ _check_signal_callback_type (const Expr *expr,
 		Debug::emit_error ("Incorrect number of arguments in signal "
 		                   "handler for signal ‘%0::%1’. Expected %2 "
 		                   "but saw %3.",
-		                   compiler, expr->getLocStart ())
+		                   compiler,
+#ifdef HAVE_LLVM_8_0
+		                   expr->getBeginLoc ()
+#else
+		                   expr->getLocStart ()
+#endif
+		                   )
 		<< gir_manager.get_c_name_for_type (static_instance_info)
 		<< g_base_info_get_name (signal_info)
 		<< n_signal_args
@@ -817,11 +814,7 @@ _check_signal_callback_type (const Expr *expr,
 		const gchar *arg_name;
 		bool type_error;
 
-#ifdef HAVE_LLVM_3_5
 		actual_type = callback_type->getParamType (i);
-#else /* if !HAVE_LLVM_3_5 */
-		actual_type = callback_type->getArgType (i);
-#endif /* !HAVE_LLVM_3_5 */
 
 		if ((i == 0 && !is_swapped) ||
 		    (i == n_signal_args - 1 && is_swapped)) {
@@ -866,7 +859,12 @@ _check_signal_callback_type (const Expr *expr,
 				                     "signal ‘%1::%2’. Cannot "
 				                     "find type with name "
 				                     "‘%3’.", compiler,
-				                     expr->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+				                     expr->getBeginLoc ()
+#else
+				                     expr->getLocStart ()
+#endif
+				                     )
 				<< arg_name
 				<< c_type
 				<< g_base_info_get_name (signal_info)
@@ -917,7 +915,12 @@ _check_signal_callback_type (const Expr *expr,
 					                    "for signal ‘%1::%2’. It "
 					                    "should be ‘%3’ but is "
 					                    "currently ‘%4’.", compiler,
-					                    expr->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+					                    expr->getBeginLoc ()
+#else
+					                    expr->getLocStart ()
+#endif
+					                    )
 					<< arg_name
 					<< gir_manager.get_c_name_for_type (static_instance_info)
 					<< g_base_info_get_name (signal_info)
@@ -931,7 +934,12 @@ _check_signal_callback_type (const Expr *expr,
 					                    "for signal ‘%1::%2’. It "
 					                    "should be ‘%3’ but is "
 					                    "currently ‘%4’.", compiler,
-					                    expr->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+					                    expr->getBeginLoc ()
+#else
+					                    expr->getLocStart ()
+#endif
+					                    )
 					<< arg_name
 					<< gir_manager.get_c_name_for_type (static_instance_info)
 					<< g_base_info_get_name (signal_info)
@@ -995,7 +1003,12 @@ _check_signal_callback_type (const Expr *expr,
 				                     "signal ‘%1::%2’. Cannot "
 				                     "find type with name "
 				                     "‘%3’.", compiler,
-				                     expr->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+				                     expr->getBeginLoc ()
+#else
+				                     expr->getLocStart ()
+#endif
+				                     )
 				<< arg_name
 				<< gir_manager.get_c_name_for_type (static_instance_info)
 				<< g_base_info_get_name (signal_info)
@@ -1026,7 +1039,12 @@ _check_signal_callback_type (const Expr *expr,
 			                   "in swapped signal handler for "
 			                   "signal ‘%1::%2’. Expected ‘%3’ but "
 			                   "saw ‘%4’.", compiler,
-			                   expr->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+			                   expr->getBeginLoc ()
+#else
+			                   expr->getLocStart ()
+#endif
+			                   )
 			<< arg_name
 			<< gir_manager.get_c_name_for_type (static_instance_info)
 			<< g_base_info_get_name (signal_info)
@@ -1043,7 +1061,12 @@ _check_signal_callback_type (const Expr *expr,
 			                   "in signal handler for signal "
 			                   "‘%1::%2’. Expected ‘%3’ but saw "
 			                   "‘%4’.", compiler,
-			                   expr->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+			                   expr->getBeginLoc ()
+#else
+			                   expr->getLocStart ()
+#endif
+			                   )
 			<< arg_name
 			<< gir_manager.get_c_name_for_type (static_instance_info)
 			<< g_base_info_get_name (signal_info)
@@ -1057,11 +1080,7 @@ _check_signal_callback_type (const Expr *expr,
 
 	/* Return type. */
 	g_callable_info_load_return_type (callable_info, &expected_type_info);
-#ifdef HAVE_LLVM_3_5
 	actual_type = callback_type->getReturnType ();
-#else /* !HAVE_LLVM_3_5 */
-	actual_type = callback_type->getResultType ();
-#endif /* HAVE_LLVM_3_5 */
 	expected_type = _type_info_to_type (&expected_type_info, context,
 	                                    gir_manager, type_manager);
 	if (expected_type.isNull ()) {
@@ -1071,7 +1090,12 @@ _check_signal_callback_type (const Expr *expr,
 		Debug::emit_warning ("Failed to resolve return type in signal "
 		                     "handler for signal ‘%0::%1’. Cannot find "
 		                     "type with name ‘%2’.", compiler,
-		                     expr->getLocStart ())
+#ifdef HAVE_LLVM_8_0
+		                     expr->getBeginLoc ()
+#else
+		                     expr->getLocStart ()
+#endif
+		                     )
 		<< gir_manager.get_c_name_for_type (static_instance_info)
 		<< g_base_info_get_name (signal_info)
 		<< g_base_info_get_name (&expected_type_info)
@@ -1086,7 +1110,13 @@ _check_signal_callback_type (const Expr *expr,
 		/* TODO: Emit expected type of signal callback? */
 		Debug::emit_error ("Incorrect return type from signal handler "
 		                   "for signal ‘%0::%1’. Expected ‘%2’ but saw "
-		                   "‘%3’.", compiler, expr->getLocStart ())
+		                   "‘%3’.", compiler,
+#ifdef HAVE_LLVM_8_0
+		                   expr->getBeginLoc ()
+#else
+		                   expr->getLocStart ()
+#endif
+		                   )
 		<< gir_manager.get_c_name_for_type (static_instance_info)
 		<< g_base_info_get_name (signal_info)
 		<< expected_type.getAsString ()
@@ -1246,7 +1276,13 @@ _check_gsignal_callback_type (const CallExpr &call,
 		Debug::emit_warning ("Non-string literal passed to signal "
 		                     "name parameter. This is not an error "
 		                     "but is highly unusual.",
-		                     compiler, signal_name_arg->getLocStart ());
+		                     compiler,
+#ifdef HAVE_LLVM_8_0
+		                     signal_name_arg->getBeginLoc ()
+#else
+		                     signal_name_arg->getLocStart ()
+#endif
+		                     );
 
 		return false;
 	}
@@ -1285,7 +1321,12 @@ _check_gsignal_callback_type (const CallExpr &call,
 		                    "%1() to the specific class defining the "
 		                    "signal. Ensure a GIR file defining that "
 		                    "class is loaded.", compiler,
-		                    call.getLocStart ())
+#ifdef HAVE_LLVM_8_0
+		                    call.getBeginLoc ()
+#else
+		                    call.getLocStart ()
+#endif
+		                    )
 		<< signal_name
 		<< func_info->func_name
 		<< gobject_arg->getSourceRange ()
@@ -1316,7 +1357,13 @@ _check_gsignal_callback_type (const CallExpr &call,
 		                    "typecast to the GObject parameter of "
 		                    "%2() to the specific class defining the "
 		                    "signal. Ensure a GIR file defining that "
-		                    "class is loaded.", compiler, call.getLocStart ())
+		                    "class is loaded.", compiler,
+#ifdef HAVE_LLVM_8_0
+		                    call.getBeginLoc ()
+#else
+		                    call.getLocStart ()
+#endif
+		                    )
 		<< signal_name
 		<< gir_manager.get_c_name_for_type (dynamic_instance_info)
 		<< func_info->func_name

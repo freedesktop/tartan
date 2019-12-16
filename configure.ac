@@ -30,7 +30,7 @@ LT_INIT([])
 PKG_PROG_PKG_CONFIG
 
 # Requirements
-LLVM_REQS=3.5
+LLVM_REQS=7.0
 GLIB_REQS=2.38  # TODO
 GIO_REQS=2.38  # TODO
 GIR_REQS=1.38.0  # TODO
@@ -56,17 +56,17 @@ AS_IF([test $LLVM_CONFIG = "failed"],[
 AC_MSG_CHECKING([for LLVM])
 
 # LLVM_REQS is either (e.g.) 3.5, 3.6svn or 3.4.2
-req_major=`echo $LLVM_REQS | sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\(\.[[0-9]]*\)\?\(svn\)\?/\1/'`
-req_minor=`echo $LLVM_REQS | sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\(\.[[0-9]]*\)\?\(svn\)\?/\2/'`
+req_major=`echo $LLVM_REQS | sed -E 's/([[0-9]]*)\.([[0-9]]*)(\.[[0-9]]*)?(svn)?/\1/'`
+req_minor=`echo $LLVM_REQS | sed -E 's/([[0-9]]*)\.([[0-9]]*)(\.[[0-9]]*)?(svn)?/\2/'`
 
 llvm_version=`$LLVM_CONFIG --version`
 
-major=`echo $llvm_version | sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\(\.[[0-9]]*\)\?\(svn\)\?/\1/'`
-minor=`echo $llvm_version | sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\(\.[[0-9]]*\)\?\(svn\)\?/\2/'`
+major=`echo $llvm_version | sed -E 's/([[0-9]]*)\.([[0-9]]*)(\.[[0-9]]*)?(svn)?/\1/'`
+minor=`echo $llvm_version | sed -E 's/([[0-9]]*)\.([[0-9]]*)(\.[[0-9]]*)?(svn)?/\2/'`
 
 AS_IF([test "$major" -gt "$req_major" -o \( "$major" -eq "$req_major" -a "$minor" -ge "$req_minor" \)],[
-	LLVM_CPPFLAGS=`$LLVM_CONFIG --cppflags`
-	LLVM_CXXFLAGS=`$LLVM_CONFIG --cxxflags`
+	LLVM_CPPFLAGS=`$LLVM_CONFIG --cppflags | sed -e 's,-I/,-isystem /,' | sed -e 's,-isystem /usr/include,-I/usr/include,'`
+	LLVM_CXXFLAGS=`$LLVM_CONFIG --cxxflags | sed -e 's,-I/,-isystem /,' | sed -e 's,-isystem /usr/include,-I/usr/include,'`
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 	# Don't link against the LLVM libs because they're huge. All the symbols
 	# will be available when the plugin is loaded anyway.
@@ -88,23 +88,11 @@ AC_DEFINE_UNQUOTED([LLVM_CONFIG_VERSION],"$llvm_version",
                    [Configured LLVM version])
 
 # LLVM-specific version definitions
-AS_IF([test "$major" -gt 3 -o "$major" -eq 3 -a "$minor" -ge 5],[
-	AC_DEFINE([HAVE_LLVM_3_5], [1], [Whether LLVM ≥ 3.5 is available])
+AS_IF([test "$major" -ge 8],[
+    AC_DEFINE([HAVE_LLVM_8_0], [1], [Whether LLVM ≥ 8.0 is available])
 ])
-AS_IF([test "$major" -gt 3 -o "$major" -eq 3 -a "$minor" -ge 6],[
-	AC_DEFINE([HAVE_LLVM_3_6], [1], [Whether LLVM ≥ 3.6 is available])
-])
-AS_IF([test "$major" -gt 3 -o "$major" -eq 3 -a "$minor" -ge 7],[
-	AC_DEFINE([HAVE_LLVM_3_7], [1], [Whether LLVM ≥ 3.7 is available])
-])
-AS_IF([test "$major" -gt 3 -o "$major" -eq 3 -a "$minor" -ge 8],[
-	AC_DEFINE([HAVE_LLVM_3_8], [1], [Whether LLVM ≥ 3.8 is available])
-])
-AS_IF([test "$major" -gt 3 -o "$major" -eq 3 -a "$minor" -ge 9],[
-	AC_DEFINE([HAVE_LLVM_3_9], [1], [Whether LLVM ≥ 3.9 is available])
-])
-AS_IF([test "$major" -gt 4 -o "$major" -eq 4 -a "$minor" -ge 0],[
-	AC_DEFINE([HAVE_LLVM_4_0], [1], [Whether LLVM ≥ 4.0 is available])
+AS_IF([test "$major" -ge 9],[
+    AC_DEFINE([HAVE_LLVM_9_0], [1], [Whether LLVM ≥ 9.0 is available])
 ])
 
 # Clang dependency (e.g. the clang-devel package on Fedora)
@@ -125,7 +113,7 @@ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],"$GETTEXT_PACKAGE",
 IT_PROG_INTLTOOL([0.40.0])
 
 # Code coverage for unit tests
-AX_CODE_COVERAGE
+TARTAN_CODE_COVERAGE
 
 # Compiler warnings
 AX_COMPILER_FLAGS

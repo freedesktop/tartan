@@ -421,8 +421,8 @@ GErrorChecker::_handle_eval_g_propagate_error (CheckerContext &context,
 		return state;
 	}
 
-	DEBUG_DUMPABLE ("Handle post-g_propagate_error: dest_location:",
-	                dest_location);
+	DEBUG_DUMPABLE ("Handle post-g_propagate_error: dest_ptr_location:",
+	                dest_ptr_location);
 	DEBUG_DUMPABLE ("Handle post-g_propagate_error: src_location:",
 	                src_location);
 
@@ -505,9 +505,19 @@ GErrorChecker::checkPreCall (const CallEvent &call,
 /* Dispatch call-evaluation events to the different per-function handlers.
  * Return true iff the call was evaluated. */
 bool
-GErrorChecker::evalCall (const CallExpr *call,
+GErrorChecker::evalCall (
+#ifdef HAVE_LLVM_9_0
+                         const CallEvent &call_event,
+#else
+                         const CallExpr *call,
+#endif
                          CheckerContext &context) const
 {
+#ifdef HAVE_LLVM_9_0
+	const CallExpr *call = llvm::dyn_cast<CallExpr>(call_event.getOriginExpr());
+	if (!call)
+		return false;
+#endif
 	const FunctionDecl *func_decl = context.getCalleeDecl (call);
 
 	if (func_decl == NULL ||
@@ -616,9 +626,11 @@ void
 GErrorChecker::checkDeadSymbols (SymbolReaper &symbol_reaper,
                                  CheckerContext &context) const
 {
+#ifndef HAVE_LLVM_8_0
 	if (!symbol_reaper.hasDeadSymbols ()) {
 		return;
 	}
+#endif
 
 	ProgramStateRef state = context.getState ();
 
@@ -679,7 +691,8 @@ GErrorChecker::_gerror_new (const Expr *call_expr,
 	}
 
 	/* Fill the region with the initialization value. */
-	state = state->bindDefault (*allocated_sval, UndefinedVal ());
+	state = state->bindDefaultInitial (*allocated_sval, UndefinedVal (),
+	                                   context.getLocationContext ());
 
 	const MemRegion *allocated_region = allocated_sval->getAsRegion ();
 	assert (allocated_region);
@@ -732,7 +745,7 @@ GErrorChecker::_gerror_free (SVal error_location, ProgramStateRef state,
 	/* Fill the MemRegion with rubbish. */
 	if (error_location.getAs<Loc> ()) {
 		state = state->bindLoc (error_location.castAs<Loc> (),
-		                        UndefinedVal ());
+		                        UndefinedVal (), context.getLocationContext ());
 		assert (state != NULL);
 	}
 
@@ -764,11 +777,7 @@ GErrorChecker::_assert_gerror_set (SVal error_location,
                                    const SourceRange &source_range) const
 {
 	if (error_location.getAs<UndefinedVal> ()) {
-#if HAVE_LLVM_3_8
 		ExplodedNode *error_node = context.generateErrorNode (state);
-#else
-		ExplodedNode *error_node = context.generateSink (state);
-#endif
 
 		this->_initialise_bug_reports ();
 		auto R = llvm::make_unique<BugReport> (*this->_use_uninitialised,
@@ -793,11 +802,7 @@ GErrorChecker::_assert_gerror_set (SVal error_location,
 		state->assume (error_location.castAs<DefinedOrUnknownSVal> ());
 	if (null_state && !not_null_state && !null_allowed) {
 		/* Definitely NULL. */
-#if HAVE_LLVM_3_8
 		ExplodedNode *error_node = context.generateErrorNode (state);
-#else
-		ExplodedNode *error_node = context.generateSink (state);
-#endif
 
 		this->_initialise_bug_reports ();
 		auto R = llvm::make_unique<BugReport> (*this->_free_cleared,
@@ -826,11 +831,7 @@ GErrorChecker::_assert_gerror_set (SVal error_location,
 	const ErrorState *error_state = _error_map_get (state, error_sym);
 
 	if (error_state != NULL && error_state->isFreed ()) {
-#if HAVE_LLVM_3_8
 		ExplodedNode *error_node = context.generateErrorNode (state);
-#else
-		ExplodedNode *error_node = context.generateSink (state);
-#endif
 
 		this->_initialise_bug_reports ();
 		auto R = llvm::make_unique<BugReport> (*this->_double_free,
@@ -842,13 +843,7 @@ GErrorChecker::_assert_gerror_set (SVal error_location,
 
 		return false;
 	} else if (error_state != NULL && !error_state->isSet ()) {
-#if HAVE_LLVM_3_8
 		ExplodedNode *error_node = context.generateErrorNode (state);
-#else
-		ExplodedNode *error_node = context.generateSink (state);
-#endif
-
-
 
 		this->_initialise_bug_reports ();
 		auto R = llvm::make_unique<BugReport> (*this->_free_cleared,
@@ -929,13 +924,7 @@ GErrorChecker::_assert_gerror_unset (SVal error_location,
 	/* Branch on whether the GError* is NULL. If it isn’t NULL, there’s a
 	 * bug. */
 	if (error_location.getAs<UndefinedVal> () && !undef_allowed) {
-#if HAVE_LLVM_3_8
 		ExplodedNode *error_node = context.generateErrorNode (state);
-#else
-		ExplodedNode *error_node = context.generateSink (state);
-#endif
-
-
 
 		this->_initialise_bug_reports ();
 		auto R = llvm::make_unique<BugReport> (*this->_use_uninitialised,
@@ -970,13 +959,7 @@ GErrorChecker::_assert_gerror_unset (SVal error_location,
 	const ErrorState *error_state = _error_map_get (state, error_sym);
 
 	if (error_state != NULL && error_state->isSet ()) {
-#if HAVE_LLVM_3_8
 		ExplodedNode *error_node = context.generateErrorNode (state);
-#else
-		ExplodedNode *error_node = context.generateSink (state);
-#endif
-
-
 
 		this->_initialise_bug_reports ();
 		auto R = llvm::make_unique<BugReport> (*this->_overwrite_set,
@@ -989,13 +972,7 @@ GErrorChecker::_assert_gerror_unset (SVal error_location,
 		return false;
 	} else if (error_state != NULL && error_state->isFreed () &&
 	           !undef_allowed) {
-#if HAVE_LLVM_3_8
 		ExplodedNode *error_node = context.generateErrorNode (state);
-#else
-		ExplodedNode *error_node = context.generateSink (state);
-#endif
-
-
 
 		this->_initialise_bug_reports ();
 		auto R = llvm::make_unique<BugReport> (*this->_overwrite_freed,
@@ -1040,7 +1017,8 @@ GErrorChecker::_set_gerror (SVal error_location,
                             const SourceRange &source_range) const
 {
 	/* Bind the error location to the new error. */
-	state = state->bindLoc (error_location, new_error);
+	state = state->bindLoc (error_location, new_error,
+	                        context.getLocationContext ());
 	assert (state != NULL);
 
 	/* Constrain the GError* location (lvalue) and rvalue to be non-NULL. */
@@ -1076,7 +1054,8 @@ GErrorChecker::_clear_gerror (SVal error_location,
 	/* Bind the GError* to NULL. */
 	SValBuilder &sval_builder = context.getSValBuilder ();
 
-	state = state->bindLoc (error_location, sval_builder.makeNull ());
+	state = state->bindLoc (error_location, sval_builder.makeNull (),
+	                        context.getLocationContext ());
 	assert (state != NULL);
 
 	/* Constrain the GError* location (lvalue) to be NULL. */

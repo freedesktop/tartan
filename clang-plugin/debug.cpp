@@ -37,11 +37,7 @@ void
 Debug::emit_bug_report (std::unique_ptr<BugReport> report,
                         CheckerContext &context)
 {
-	#ifndef HAVE_LLVM_3_7
-	context.emitReport (report.get ());
-	#else
 	context.emitReport (std::move (report));
-	#endif
 }
 
 /* Build and emit a warning or error report about the user’s code. */

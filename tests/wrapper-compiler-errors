@@ -21,10 +21,10 @@
 # asserts there’s no error.
 
 input_filename=$1
-temp_dir=`mktemp -d`
+temp_dir=`mktemp -d`/${abs_top_builddir}
 tests_dir=`dirname $0`
 tartan=${tests_dir}/../scripts/tartan
-tartan_plugin=${tests_dir}/../clang-plugin/.libs/libtartan.so
+tartan_plugin=${abs_top_builddir}/clang-plugin/.libs/libtartan.so
 
 echo "Reading input from ${input_filename}."
 echo "Using temporary directory ${temp_dir}."
@@ -36,7 +36,8 @@ test_status=0
 # Before starting, work out the compiler’s system include paths.
 # Thanks to: http://stackoverflow.com/a/17940271/2931197
 system_includes=`echo | cpp -Wp,-v 2>&1 | grep '^[[:space:]]' | \
-	sed -e 's/^[[:space:]]*/-isystem/' | tr "\n" ' '`
+	sed -e 's/^[[:space:]]*/-isystem/' -e 's/ (framework directory)//' | \
+	tr "\n" ' '`
 
 # Extract the template name.
 template_name=`head -n 1 "${input_filename}" | \
@@ -46,6 +47,7 @@ template_name=`head -n 1 "${input_filename}" | \
 echo "Using template ${template_name}."
 
 # Split the input file up into sections, delimiting on ‘/*’ on a line by itself.
+mkdir -p ${temp_dir}/${srcdir}
 tail -n +3 "${input_filename}" > "${temp_dir}/${input_filename}.tail"
 csplit --keep-files --elide-empty-files --silent \
 	--prefix="${temp_dir}/${input_filename}_" \
@@ -67,9 +69,9 @@ while [[ -f `printf "${temp_dir}/${input_filename}_%02d.c" ${num}` ]]; do
 	echo " - Outputting to error files ${expected_error_filename} and ${actual_error_filename}."
 
 	# Wrap the section’s code with a prefix and suffix.
-	(cat "${template_name}.head.c"
+	(cat "${srcdir}/${template_name}.head.c"
 	 cat "${section_filename}"
-	 cat "${template_name}.tail.c"
+	 cat "${srcdir}/${template_name}.tail.c"
 	) > $section_filename.tmp
 	mv -f $section_filename.tmp $section_filename
 
@@ -107,20 +109,11 @@ while [[ -f `printf "${temp_dir}/${input_filename}_%02d.c" ${num}` ]]; do
 
 		while read line
 		do
-			# Check the string and the string with ‘which’ for
-			# ‘that’ against the actual errors. This is a hack
-			# needed to support testing against LLVM 3.4 and 3.5
-			# from the same test vectors.
-			#
-			# See commit 0743df4033967c18a5009e4f01ccf709f7c06c86
-			# for details.
+			# Check the string against the actual errors.
 			grep -F "${line}" "${actual_error_filename}" >/dev/null
-			grep_status1=$?
+			grep_status=$?
 
-			grep -F "${line//that/which}" "${actual_error_filename}" >/dev/null
-			grep_status2=$?
-
-			if [ $grep_status1 -ne 0 -a $grep_status2 -ne 0 ]; then
+			if [ $grep_status -ne 0 ]; then
 				echo " * Non-matching line:" 1>&2
 				echo "${line}" 1>&2
 				grep_failed=1
