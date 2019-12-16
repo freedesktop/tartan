@@ -1,1 +1,0 @@
-Add a checker which emits a warning if a *_get_type() function does not have a ‘pure’ attribute.

@@ -1,1 +1,0 @@
-Similarly, if a (transfer none) annotation exists for a function parameter, emit a warning if that parameter is not const-qualified.

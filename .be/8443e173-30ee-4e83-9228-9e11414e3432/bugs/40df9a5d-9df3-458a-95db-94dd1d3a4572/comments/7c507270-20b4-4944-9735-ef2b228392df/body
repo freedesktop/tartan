@@ -1,2 +1,0 @@
-Ensure g_return_if_fail() preconditions are in place before any of the checked variables are dereferenced or used (optional, disabled by default).
-

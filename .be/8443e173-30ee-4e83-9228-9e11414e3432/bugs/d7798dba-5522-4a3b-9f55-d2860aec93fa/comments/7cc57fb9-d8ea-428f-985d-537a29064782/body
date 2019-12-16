@@ -1,3 +1,0 @@
-Multiple sequential calls to g_object_[get|set]() can be coalesced into a single one.
-
-There may be other APIs where this is possible.

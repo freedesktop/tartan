@@ -1,2 +1,0 @@
-Also, warn about the following construct:
-    GError *my_error;  /* not initialised to NULL */

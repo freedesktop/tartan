@@ -1,3 +1,0 @@
-Add a checker which tests whether a (transfer none) annotation is present for function parameters which are const-qualified.
-
-If it isn’t, emit a warning.
