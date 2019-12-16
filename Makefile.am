@@ -74,6 +74,7 @@ clang_plugin_libtartan_la_LDFLAGS = \
 dist_bin_SCRIPTS = \
 	scripts/tartan \
 	scripts/tartan-build \
+	scripts/tartan-json \
 	$(NULL)
 
 # Code coverage
