@@ -21,6 +21,7 @@
 # asserts there’s no error.
 
 input_filename=$1
+input_ext=${input_filename##*.}
 temp_dir=`mktemp -d`/${abs_top_builddir}
 tests_dir=`dirname $0`
 tartan=${tests_dir}/../scripts/tartan
@@ -51,14 +52,14 @@ mkdir -p ${temp_dir}/${srcdir}
 tail -n +3 "${input_filename}" > "${temp_dir}/${input_filename}.tail"
 csplit --keep-files --elide-empty-files --silent \
 	--prefix="${temp_dir}/${input_filename}_" \
-	--suffix-format='%02d.c' \
+	--suffix-format="%02d${input_ext}" \
 	"${temp_dir}/${input_filename}.tail" '/^\/\*/' '{*}'
 
 echo ""
 
 num=0
-while [[ -f `printf "${temp_dir}/${input_filename}_%02d.c" ${num}` ]]; do
-	section_filename=`printf ${temp_dir}/${input_filename}_%02d.c ${num}`
+while [[ -f `printf "${temp_dir}/${input_filename}_%02d${input_ext}" ${num}` ]]; do
+	section_filename=`printf ${temp_dir}/${input_filename}_%02d${input_ext} ${num}`
 	expected_error_filename=`printf ${temp_dir}/${input_filename}_%02d.expected ${num}`
 	actual_error_filename=`printf ${temp_dir}/${input_filename}_%02d.actual ${num}`
 
@@ -88,6 +89,12 @@ while [[ -f `printf "${temp_dir}/${input_filename}_%02d.c" ${num}` ]]; do
 		expect_error=true
 	fi
 
+	case $input_ext in
+		c) lang_options=-std=c89 ;;
+		cpp) lang_options=-xc++ ;;
+		*) lang_options=
+	esac
+
 	# Run the compiler.
 	# e.g. Set
 	# TARTAN_TEST_OPTIONS="-analyzer-checker=debug.ViewExplodedGraph" to
@@ -95,7 +102,7 @@ while [[ -f `printf "${temp_dir}/${input_filename}_%02d.c" ${num}` ]]; do
 	TARTAN_PLUGIN=$tartan_plugin \
 	TARTAN_OPTIONS=--quiet \
 	$tartan \
-		-cc1 -analyze -std=c89 -Wno-visibility $TARTAN_TEST_OPTIONS \
+		-cc1 -analyze $lang_options -Wno-visibility $TARTAN_TEST_OPTIONS \
 		`pkg-config --cflags glib-2.0` \
 		$system_includes \
 		$section_filename > $actual_error_filename 2>&1

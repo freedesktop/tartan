@@ -378,6 +378,19 @@ AssertionExtracter::is_assertion_stmt (Stmt& stmt, const ASTContext& context)
 		 *     I ↦ TRUE */
 		return dyn_cast<Expr> (&stmt);
 	}
+	case Stmt::StmtClass::ExprWithCleanupsClass: {
+		/* Handle an expression that introduces a cleanup to be run at the end
+		 * of evaluation; most likely a C++ temporary object.
+		 * Transformations:
+		 *     S ↦ calc(S) */
+		ExprWithCleanups& expr_cleanup = cast<ExprWithCleanups> (stmt);
+
+		Stmt *sub_expr = expr_cleanup.getSubExpr ();
+		if (sub_expr == NULL)
+			return NULL;
+
+		return is_assertion_stmt (*sub_expr, context);
+	}
 	case Stmt::StmtClass::ParenExprClass: {
 		/* Handle a parenthesised expression.
 		 * Transformations:
@@ -415,6 +428,20 @@ AssertionExtracter::is_assertion_stmt (Stmt& stmt, const ASTContext& context)
 
 		return is_assertion_stmt (*sub_expr, context);
 	}
+	case Stmt::StmtClass::CXXTryStmtClass: {
+		/* Handle a C++ try statement. We assume any assertions in any of the
+		 * handler blocks happen after program state is modified, so we only
+		 * consider the try block.
+		 * Transformations:
+		 *     try { S1 } catch (…) { S2 } [ … catch (…) { Sn } ] ↦ calc(S1) */
+		CXXTryStmt& try_stmt = cast<CXXTryStmt> (stmt);
+
+		CompoundStmt* try_block = try_stmt.getTryBlock ();
+		if (try_block == NULL)
+			return NULL;
+
+		return is_assertion_stmt (*try_block, context);
+	}
 	case Stmt::StmtClass::GCCAsmStmtClass:
 	case Stmt::StmtClass::MSAsmStmtClass:
 		/* Inline assembly. There is no way we are parsing this, so
@@ -441,10 +468,29 @@ AssertionExtracter::is_assertion_stmt (Stmt& stmt, const ASTContext& context)
 		 * Transformations:
 		 *     S1 op S2 ↦ NULL */
 	case Stmt::StmtClass::ForStmtClass:
+	case Stmt::StmtClass::CXXForRangeStmtClass:
 		/* Handle a for statement. We assume these *always* change
 		 * program state.
 		 * Transformations:
 		 *     for (…) { … } ↦ NULL */
+	case Stmt::StmtClass::AtomicExprClass:
+		/* Handle a C++11 or C11 atomic builtin. This definitely modifies
+		 * program state.
+		 * Transformations:
+		 *     __atomic_builtin (…) ↦ NULL */
+	case Stmt::StmtClass::CXXDeleteExprClass:
+	case Stmt::StmtClass::CXXNewExprClass:
+	case Stmt::StmtClass::CXXThrowExprClass:
+		/* Handle a C++ delete, new, or throw expression. These definitely
+		 * modify program state.
+		 * Transformations:
+		 *     delete S ↦ NULL
+		 *     new S (…) ↦ NULL
+		 *     throw S ↦ NULL */
+	case Stmt::StmtClass::CXXMemberCallExprClass:
+	case Stmt::StmtClass::CXXOperatorCallExprClass:
+		/* Handle a C++ call. These could possibly contain some form of
+		 * assertion, but not one that we recognize currently. */
 	case Stmt::StmtClass::WhileStmtClass: {
 		/* Handle a while(…) { … } block. Because we don't want to solve
 		 * the halting problem, just assume all while statements cannot
@@ -471,6 +517,9 @@ AssertionExtracter::is_assertion_stmt (Stmt& stmt, const ASTContext& context)
 static Expr*
 _simplify_boolean_expr (Expr* expr, const ASTContext& context)
 {
+	if (ExprWithCleanups* expr_cleanup = dyn_cast<ExprWithCleanups> (expr))
+		expr = expr_cleanup->getSubExpr ();
+
 	expr = expr->IgnoreParens ();
 
 	DEBUG ("Simplifying boolean expression of type " <<
@@ -686,6 +735,8 @@ _assertion_is_gobject_type_check (Expr& assertion_expr,
 	case Expr::UnaryOperatorClass:
 	case Expr::ConditionalOperatorClass:
 	case Expr::CallExprClass:
+	case Expr::CXXMemberCallExprClass:
+	case Expr::CXXOperatorCallExprClass:
 	case Expr::ImplicitCastExprClass: {
 		/* These can’t be type checks. */
 		return 0;
@@ -819,7 +870,12 @@ _assertion_is_explicit_nonnull_check (Expr& assertion_expr,
 		 * detecting them requires a formal program transformation which
 		 * has not been implemented yet. */
 	case Expr::CallExprClass:
+	case Expr::CXXMemberCallExprClass:
 		/* Function calls can’t be nonnull checks. */
+	case Expr::CXXOperatorCallExprClass:
+		/* An overloaded operator might be a nonnull check, but only on a C++
+		 * object, which we choose not to handle because objects might implement
+		 * any sort of weird behaviour in their overloaded operators. */
 	case Expr::IntegerLiteralClass: {
 		/* Integer literals can’t be nonnull checks. */
 		return 0;
