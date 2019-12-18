@@ -13,8 +13,14 @@
 	<download-page rdf:resource="http://www.freedesktop.org/software/tartan/releases/"/>
 	<maintainer>
 		<foaf:Person>
+			<foaf:name>Philip Chimento</foaf:name>
+			<foaf:mbox rdf:resource="mailto:philip.chimento@gmail.com"/>
+			<foaf:nick>ptomato</foaf:nick>
+			<gnome:userid>pchimento</gnome:userid>
+		</foaf:Person>
+		<foaf:Person>
 			<foaf:name>Philip Withnall</foaf:name>
-			<foaf:mbox rdf:resource="mailto:philip.withnall@collabora.co.uk"/>
+			<foaf:mbox rdf:resource="mailto:philip@tecnocode.co.uk"/>
 			<gnome:userid>pwithnall</gnome:userid>
 		</foaf:Person>
 	</maintainer>
