@@ -149,6 +149,12 @@ if [ "$escape_plugin_flags" = "1" ]; then
 		_add_plugin+=( "-Xanalyzer" "$arg" )
 	done
 	add_plugin=( "${_add_plugin[@]}" )
+
+	_plugin_options=()
+	for arg in "${plugin_options[@]}"; do
+		_plugin_options+=( "-Xanalyzer" "$arg" )
+	done
+	plugin_options=( "${_plugin_options[@]}")
 fi
 
 if [ "$include_plugin_flags" = "1" ]; then
