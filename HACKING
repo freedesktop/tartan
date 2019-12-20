@@ -3,6 +3,38 @@ Hacking on Tartan
 
 A very basic and incomplete guide.
 
+Development principles
+---
+
+The intention is for Tartan to always be developed according to these
+principles, which are in no particular order:
+
+ * Stability: Tartan needs to reliably run, and needs to have a consistent
+   command line and build system interface, so that projects only ever need to
+   integrate support for it once.
+ * Limiting false positives: Nobody will use Tartan if it produces too many
+   false positives. Keeping the false positive rate low is more important than
+   increasing the true positive rate or decreasing the false negative rate.
+ * Allowing choice over warnings/errors: Where it’s not possible to keep the
+   false positive rate low, Tartan needs to offer users the choice to disable
+   specific warnings/errors or classes of warnings/errors, so that they can
+   manually keep their own false positive rate low.
+ * Depth of checks before breadth of checks: It’s more important to catch all
+   the problems with a certain data type (for example, `GError`) than to catch
+   some problems with all data types, as this means users of Tartan only have to
+   refactor their (for example) `GError` usage once, rather than multiple times
+   as Tartan adds more checks.
+ * Focus on big gain checks first: Prioritise spending implementation time on
+   checks which are going to be useful to as many people as possible, before
+   working on ones which are less likely to be needed.
+ * Focus on ease of use: If Tartan is not easy to use, or its output not easy
+   to understand, nobody is going to use it.
+ * Do not require user code modifications: Users should not have to modify their
+   code in order to run Tartan on it. That is not easy to use.
+ * Unit tests for everything: Clang keeps changing, and once users have found a
+   bug in their code using Tartan, they are going to fix it — so we can’t rely
+   on Tartan’s behaviour not changing over time, and we can’t rely on users
+   consistently and reproducibly testing it. So we must do that ourselves.
 
 Plugins
 -------
