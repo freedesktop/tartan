@@ -204,14 +204,15 @@ private:
 			}
 
 			while ((typelib_filename = g_dir_read_name (dir)) != NULL) {
-				/* Load the typelib. Ignore failure. */
-
-				std::string _typelib_filename (typelib_filename);
-				std::string::size_type last_dot = _typelib_filename.find_last_of (".");
-				if (last_dot == std::string::npos) {
+				if (!g_str_has_suffix (typelib_filename, ".typelib")) {
 					/* No ‘.typelib’ suffix — ignore. */
 					continue;
 				}
+
+				/* Load the typelib. Ignore failure. */
+				std::string _typelib_filename (typelib_filename);
+				std::string::size_type last_dot = _typelib_filename.find_last_of (".");
+				g_assert (last_dot != std::string::npos);
 
 				std::string gi_namespace_and_version = _typelib_filename.substr (0, last_dot);
 				this->_load_typelib (CI, gi_namespace_and_version);
@@ -230,9 +231,6 @@ protected:
 	ParseArgs (const CompilerInstance &CI,
 	           const std::vector<std::string>& args)
 	{
-		/* Load all typelibs. */
-		this->_load_gi_repositories (CI);
-
 		/* Enable the default set of checkers. */
 		for (std::vector<std::string>::const_iterator it = args.begin();
 		     it != args.end (); ++it) {
@@ -254,8 +252,13 @@ protected:
 			} else if (arg == "--disable-checker") {
 				const std::string checker = *(++it);
 				this->_disabled_checkers.get ()->insert (std::string (checker));
+			} else if (arg == "--typelib-path") {
+				g_irepository_prepend_search_path ((++it)->c_str ());
 			}
 		}
+
+		/* Load all typelibs. */
+		this->_load_gi_repositories (CI);
 
 		/* Listen to the V environment variable (as standard in automake) too. */
 		const char *v_value = getenv ("V");
@@ -308,6 +311,8 @@ protected:
 		       "        Disable the given Tartan checker, which may be "
 		               "‘all’. All checkers are\n"
 		       "        enabled by default.\n"
+		       "    --typelib-path [path]\n"
+		       "        Add the given path to the search path for typelibs.\n"
 		       "    --quiet\n"
 		       "        Disable all plugin output except code "
 		               "diagnostics (remarks,\n"
