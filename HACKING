@@ -23,7 +23,8 @@ principles, which are in no particular order:
    the problems with a certain data type (for example, `GError`) than to catch
    some problems with all data types, as this means users of Tartan only have to
    refactor their (for example) `GError` usage once, rather than multiple times
-   as Tartan adds more checks.
+   as Tartan adds more checks. Checkers which are in progress can be marked as
+   experimental and disabled by default.
  * Focus on big gain checks first: Prioritise spending implementation time on
    checks which are going to be useful to as many people as possible, before
    working on ones which are less likely to be needed.
