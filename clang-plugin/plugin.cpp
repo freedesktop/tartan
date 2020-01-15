@@ -74,7 +74,8 @@ protected:
 	 * after this function call returns, so must be careful not to retain
 	 * state which is needed by the consumers. */
 	std::unique_ptr<ASTConsumer>
-	CreateASTConsumer (CompilerInstance &compiler, llvm::StringRef in_file)
+	CreateASTConsumer (CompilerInstance &compiler,
+					   llvm::StringRef /* in_file */)
 	{
 		/* Try and prevent Tartan’s changes to the AST from actually
 		 * affecting compilation. See bug: 844/04c. */
