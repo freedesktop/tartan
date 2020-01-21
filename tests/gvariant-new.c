@@ -22,7 +22,7 @@
 /*
  * Expected a GVariant variadic argument of type 'gint32' (aka 'int') but there wasn’t one.
  *         floating_variant = g_variant_new ("invalid");
- *                                            ^
+ *                                           ^
  */
 {
 	floating_variant = g_variant_new ("invalid");
