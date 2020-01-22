@@ -42,6 +42,7 @@ extern std::shared_ptr<GirManager> global_gir_manager;
 class Checker {
 public:
 	virtual const std::string get_name () const = 0;
+	virtual ~Checker() {}
 };
 
 class ASTChecker : public tartan::Checker,

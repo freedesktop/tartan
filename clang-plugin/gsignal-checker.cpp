@@ -141,7 +141,7 @@ _func_is_gsignal_connect (const FunctionDecl& func)
  * If the expression is not a GObject, return NULL. */
 static GIObjectInfo*
 _expr_to_gtype (const Expr *expr,
-                const ASTContext &context,
+                const ASTContext &,
                 const GirManager &gir_manager)
 {
 	QualType gobject_type = expr->getType ();
@@ -1247,7 +1247,7 @@ _parse_signal_name (const std::string &in)
  * of the GObject is not known, we can’t check anything. */
 static bool
 _check_gsignal_callback_type (const CallExpr &call,
-                              const FunctionDecl &func,
+                              const FunctionDecl & /* func */,
                               const SignalFuncInfo *func_info,
                               CompilerInstance &compiler,
                               const ASTContext &context,
