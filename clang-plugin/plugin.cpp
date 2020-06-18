@@ -55,7 +55,7 @@ std::shared_ptr<GirManager> global_gir_manager =
  */
 class TartanAction : public PluginASTAction {
 private:
-	/* Enabling/Disabling checkers is implemented as a blacklist: all
+	/* Enabling/Disabling checkers is implemented as a blocklist: all
 	 * checkers are enabled by default, unless a --disable-checker argument
 	 * specifically disables them (by listing their name in this set). */
 	std::shared_ptr<std::unordered_set<std::string>> _disabled_checkers =
